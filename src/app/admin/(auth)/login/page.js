@@ -4,7 +4,7 @@ export const metadata = { title: "Admin sign in", robots: { index: false, follow
 
 export default function AdminLoginPage() {
   return (
-    <main id="main" className="flex flex-1 items-center bg-surface-muted">
+    <main id="main" className="flex flex-1 items-center bg-muted">
       <AuthCard title="Heepzy admin" mode="admin" />
     </main>
   );

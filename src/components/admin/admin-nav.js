@@ -23,7 +23,7 @@ export function AdminNav() {
           <li key={item.href}>
             <Link
               href={item.href}
-              className="block rounded-control px-3 py-2 text-fg-muted hover:bg-surface-muted hover:text-fg"
+              className="flex min-h-11 items-center rounded-xl px-3.5 font-semibold text-on-panel-muted transition-colors hover:bg-on-panel/10 hover:text-on-panel"
             >
               {item.label}
             </Link>

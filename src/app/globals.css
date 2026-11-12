@@ -2,165 +2,141 @@
 
 /*
  * ─────────────────────────────────────────────────────────────
- * Heepzy design tokens
+ * Heepzy design tokens — "Reimagined Comfort"
  * ─────────────────────────────────────────────────────────────
- * 1. Raw semantic tokens live on :root (light, default) and are
- *    overridden under [data-theme="dark"].
- * 2. `@theme inline` maps them to Tailwind utilities, e.g.
- *    bg-surface, text-fg-muted, border-border, bg-primary,
- *    rounded-card, shadow-raised, font-display, ease-out-soft.
- * 3. Components ONLY use the semantic utilities — never raw hex —
- *    so re-theming (design references) means editing this file only.
+ * Source of truth: the Heepzy Design canvas (Tokens board).
+ * 1. Raw semantic tokens (--hz-*) on :root (light, default) and
+ *    [data-theme="dark"].
+ * 2. `@theme inline` exposes them as Tailwind utilities:
+ *    bg-bg, bg-surface, bg-muted, text-fg, text-fg-muted, border-line,
+ *    bg-accent / text-accent-fg, bg-panel / text-on-panel, text-sale…
+ * 3. Components use semantic utilities only — never raw colours.
  *
- * NOTE: the palette below is a neutral placeholder until the final
- * design references are applied.
+ * Accent rule: the lemon accent is a FILL (with text-accent-fg on
+ * top), never text on light grounds — it fails contrast there.
  */
 
-/* Dark mode is driven by data-theme on <html>, not the OS setting,
-   so the user's choice persists. `dark:` utilities follow it. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
   color-scheme: light;
 
-  /* Surfaces */
-  --hz-bg: oklch(0.99 0 0);
-  --hz-surface: oklch(1 0 0);
-  --hz-surface-muted: oklch(0.965 0.003 260);
-  --hz-surface-sunken: oklch(0.94 0.004 260);
-  --hz-overlay: oklch(0.2 0.01 260 / 0.5);
+  --hz-bg: #fafaf7;
+  --hz-surface: #ffffff;
+  --hz-muted: #f1f1ed;
+  --hz-sunken: #e9e9e3;
+  --hz-overlay: rgb(17 17 17 / 0.5);
 
-  /* Text */
-  --hz-fg: oklch(0.2 0.01 260);
-  --hz-fg-muted: oklch(0.45 0.01 260);
-  --hz-fg-subtle: oklch(0.58 0.01 260);
-  --hz-fg-inverse: oklch(0.99 0 0);
+  --hz-fg: #111111;
+  --hz-fg-muted: #5e5e59;
+  --hz-fg-inverse: #fafaf7;
 
-  /* Lines */
-  --hz-border: oklch(0.9 0.005 260);
-  --hz-border-strong: oklch(0.8 0.008 260);
+  --hz-line: #e5e5df;
+  --hz-field: #cfcfc8;
 
-  /* Brand */
-  --hz-primary: oklch(0.22 0.01 260);
-  --hz-primary-hover: oklch(0.32 0.01 260);
-  --hz-primary-fg: oklch(0.99 0 0);
-  --hz-accent: oklch(0.63 0.2 35);
-  --hz-accent-hover: oklch(0.57 0.2 35);
-  --hz-accent-fg: oklch(0.99 0 0);
+  --hz-accent: #e8dc2a;
+  --hz-accent-hover: #d9cc1a;
+  --hz-accent-fg: #111111;
 
-  /* Feedback (AA contrast on --hz-surface) */
-  --hz-success: oklch(0.52 0.13 150);
-  --hz-success-bg: oklch(0.95 0.04 150);
-  --hz-warning: oklch(0.55 0.13 75);
-  --hz-warning-bg: oklch(0.96 0.05 85);
-  --hz-danger: oklch(0.53 0.2 27);
-  --hz-danger-bg: oklch(0.95 0.03 27);
-  --hz-info: oklch(0.5 0.14 250);
-  --hz-info-bg: oklch(0.95 0.03 250);
+  /* Always-dark panels (hero, footer, admin sidebar) */
+  --hz-panel: #0b0b0b;
+  --hz-panel-2: #1c1c1a;
+  --hz-on-panel: #f5f5f0;
+  --hz-on-panel-muted: #b9b9b2;
+  --hz-panel-line: rgb(245 245 240 / 0.18);
 
-  /* Commerce */
-  --hz-sale: var(--hz-danger);
-  --hz-rating: oklch(0.75 0.16 80);
+  --hz-sale: #b3261e;
+  --hz-success: #2f6b3a;
+  --hz-success-bg: #e3f0e4;
+  --hz-warning: #7a5300;
+  --hz-warning-bg: #fbefc9;
+  --hz-info: #1f4e8c;
+  --hz-info-bg: #e2ebf7;
+  --hz-danger-bg: #f8e1de;
 
-  /* Focus */
-  --hz-ring: oklch(0.6 0.17 250);
-
-  /* Elevation */
-  --hz-shadow-raised: 0 1px 2px oklch(0 0 0 / 0.06), 0 1px 3px oklch(0 0 0 / 0.08);
-  --hz-shadow-overlay: 0 10px 30px oklch(0 0 0 / 0.12), 0 2px 8px oklch(0 0 0 / 0.08);
+  --hz-ring: #111111;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --hz-bg: oklch(0.16 0.006 260);
-  --hz-surface: oklch(0.2 0.007 260);
-  --hz-surface-muted: oklch(0.24 0.008 260);
-  --hz-surface-sunken: oklch(0.13 0.006 260);
-  --hz-overlay: oklch(0 0 0 / 0.6);
+  --hz-bg: #0d0d0c;
+  --hz-surface: #161615;
+  --hz-muted: #1c1c1a;
+  --hz-sunken: #232321;
+  --hz-overlay: rgb(0 0 0 / 0.65);
 
-  --hz-fg: oklch(0.96 0.003 260);
-  --hz-fg-muted: oklch(0.76 0.008 260);
-  --hz-fg-subtle: oklch(0.64 0.008 260);
-  --hz-fg-inverse: oklch(0.18 0.01 260);
+  --hz-fg: #f4f4ef;
+  --hz-fg-muted: #a9a9a2;
+  --hz-fg-inverse: #111111;
 
-  --hz-border: oklch(0.32 0.008 260);
-  --hz-border-strong: oklch(0.42 0.01 260);
+  --hz-line: #2a2a27;
+  --hz-field: #45453f;
 
-  --hz-primary: oklch(0.96 0.003 260);
-  --hz-primary-hover: oklch(0.88 0.005 260);
-  --hz-primary-fg: oklch(0.18 0.01 260);
-  --hz-accent: oklch(0.7 0.18 38);
-  --hz-accent-hover: oklch(0.76 0.16 40);
-  --hz-accent-fg: oklch(0.18 0.01 260);
+  --hz-accent: #ede13a;
+  --hz-accent-hover: #f5ea52;
+  --hz-accent-fg: #111111;
 
-  --hz-success: oklch(0.75 0.15 150);
-  --hz-success-bg: oklch(0.3 0.06 150);
-  --hz-warning: oklch(0.8 0.14 80);
-  --hz-warning-bg: oklch(0.32 0.06 80);
-  --hz-danger: oklch(0.72 0.17 25);
-  --hz-danger-bg: oklch(0.3 0.07 25);
-  --hz-info: oklch(0.75 0.12 250);
-  --hz-info-bg: oklch(0.3 0.06 250);
+  --hz-panel: #141413;
+  --hz-panel-2: #222220;
+  --hz-on-panel: #f5f5f0;
+  --hz-on-panel-muted: #a9a9a2;
+  --hz-panel-line: rgb(245 245 240 / 0.14);
 
-  --hz-rating: oklch(0.8 0.15 85);
-  --hz-ring: oklch(0.72 0.14 250);
+  --hz-sale: #f08a7e;
+  --hz-success: #8fd19e;
+  --hz-success-bg: #1d3322;
+  --hz-warning: #f2cb6b;
+  --hz-warning-bg: #3a2e10;
+  --hz-info: #9bbdf0;
+  --hz-info-bg: #18273d;
+  --hz-danger-bg: #3a1c18;
 
-  --hz-shadow-raised: 0 1px 2px oklch(0 0 0 / 0.4), 0 1px 3px oklch(0 0 0 / 0.5);
-  --hz-shadow-overlay: 0 10px 30px oklch(0 0 0 / 0.5), 0 2px 8px oklch(0 0 0 / 0.4);
+  --hz-ring: #ede13a;
 }
 
 @theme inline {
-  /* Colours → bg-*, text-*, border-*, ring-*, fill-* … */
   --color-bg: var(--hz-bg);
   --color-surface: var(--hz-surface);
-  --color-surface-muted: var(--hz-surface-muted);
-  --color-surface-sunken: var(--hz-surface-sunken);
+  --color-muted: var(--hz-muted);
+  --color-sunken: var(--hz-sunken);
   --color-overlay: var(--hz-overlay);
   --color-fg: var(--hz-fg);
   --color-fg-muted: var(--hz-fg-muted);
-  --color-fg-subtle: var(--hz-fg-subtle);
   --color-fg-inverse: var(--hz-fg-inverse);
-  --color-border: var(--hz-border);
-  --color-border-strong: var(--hz-border-strong);
-  --color-primary: var(--hz-primary);
-  --color-primary-hover: var(--hz-primary-hover);
-  --color-primary-fg: var(--hz-primary-fg);
+  --color-line: var(--hz-line);
+  --color-field: var(--hz-field);
   --color-accent: var(--hz-accent);
   --color-accent-hover: var(--hz-accent-hover);
   --color-accent-fg: var(--hz-accent-fg);
+  --color-panel: var(--hz-panel);
+  --color-panel-2: var(--hz-panel-2);
+  --color-on-panel: var(--hz-on-panel);
+  --color-on-panel-muted: var(--hz-on-panel-muted);
+  --color-panel-line: var(--hz-panel-line);
+  --color-sale: var(--hz-sale);
   --color-success: var(--hz-success);
   --color-success-bg: var(--hz-success-bg);
   --color-warning: var(--hz-warning);
   --color-warning-bg: var(--hz-warning-bg);
-  --color-danger: var(--hz-danger);
-  --color-danger-bg: var(--hz-danger-bg);
   --color-info: var(--hz-info);
   --color-info-bg: var(--hz-info-bg);
-  --color-sale: var(--hz-sale);
-  --color-rating: var(--hz-rating);
+  --color-danger-bg: var(--hz-danger-bg);
   --color-ring: var(--hz-ring);
 
-  /* Typography → font-sans, font-display, font-mono */
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-heading), var(--font-body), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: var(--font-heading), "Arial Narrow", ui-sans-serif, sans-serif;
 
-  /* Radii → rounded-control, rounded-card, rounded-pill */
-  --radius-control: 0.5rem;
-  --radius-card: 0.875rem;
-  --radius-pill: 9999px;
+  /* Radii → rounded-control (inputs, size pills), rounded-tile, rounded-card, rounded-panel */
+  --radius-control: 0.875rem;
+  --radius-tile: 1.375rem;
+  --radius-card: 1.5rem;
+  --radius-panel: 2rem;
 
-  /* Elevation → shadow-raised, shadow-overlay */
-  --shadow-raised: var(--hz-shadow-raised);
-  --shadow-overlay: var(--hz-shadow-overlay);
-
-  /* Motion → ease-out-soft, duration via --default-transition-duration */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --default-transition-duration: 180ms;
+  --default-transition-duration: 200ms;
 
-  /* Layout → max-w-content, max-w-prose-wide */
-  --container-content: 80rem;
+  --container-content: 87.5rem; /* 1400px */
   --container-prose-wide: 48rem;
 }
 
@@ -168,18 +144,26 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
   }
 
   body {
-    @apply bg-bg font-sans text-fg antialiased;
+    @apply bg-bg font-sans text-[15px] leading-relaxed text-fg antialiased;
   }
 
-  /* Visible, consistent keyboard focus everywhere (WCAG 2.4.7). */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
   :focus-visible {
     outline: 2px solid var(--hz-ring);
-    outline-offset: 2px;
-    border-radius: 2px;
+    outline-offset: 3px;
+  }
+
+  .bg-panel :focus-visible,
+  .bg-accent :focus-visible {
+    outline-color: currentColor;
   }
 
   ::selection {
@@ -187,7 +171,10 @@
     color: var(--hz-accent-fg);
   }
 
-  /* Respect users who prefer less motion (WCAG 2.3.3). */
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -204,37 +191,62 @@
    Declared with @utility so they compose via @apply and support
    variants (e.g. md:btn-outline). */
 @utility container-page {
-  @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
+  @apply mx-auto w-full max-w-content px-5 sm:px-8 lg:px-10;
+}
+
+@utility display {
+  @apply font-display leading-[0.95] font-semibold tracking-[-0.01em] uppercase;
+}
+
+@utility heading {
+  @apply font-display leading-[1.04] font-medium;
+}
+
+@utility eyebrow {
+  @apply text-xs font-bold tracking-[0.16em] text-fg-muted uppercase;
 }
 
 @utility btn {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-control px-5 text-sm font-medium transition-colors ease-out-soft disabled:pointer-events-none disabled:opacity-50;
+  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-7 text-sm font-bold transition-colors ease-out-soft disabled:pointer-events-none disabled:opacity-50;
 }
 @utility btn-primary {
-  @apply btn bg-primary text-primary-fg hover:bg-primary-hover;
-}
-@utility btn-accent {
   @apply btn bg-accent text-accent-fg hover:bg-accent-hover;
 }
+@utility btn-ink {
+  @apply btn bg-fg text-bg hover:opacity-90;
+}
 @utility btn-outline {
-  @apply btn border border-border-strong bg-transparent text-fg hover:bg-surface-muted;
+  @apply btn border border-fg bg-transparent text-fg hover:bg-fg hover:text-bg;
 }
 @utility btn-ghost {
-  @apply btn bg-transparent text-fg hover:bg-surface-muted;
+  @apply btn bg-transparent px-4 text-fg hover:bg-muted;
+}
+@utility btn-soft {
+  @apply btn bg-muted text-fg hover:bg-sunken;
+}
+@utility btn-icon {
+  @apply inline-grid size-11 shrink-0 place-items-center rounded-full border border-line text-fg transition-colors hover:bg-muted;
+}
+
+@utility chip {
+  @apply inline-flex min-h-11 items-center rounded-full border border-line px-6 text-[13px] font-bold transition-colors hover:border-fg aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-accent-fg aria-[current=page]:border-accent aria-[current=page]:bg-accent aria-[current=page]:text-accent-fg;
 }
 
 @utility input {
-  @apply min-h-11 w-full rounded-control border border-border-strong bg-surface px-3 text-base text-fg placeholder:text-fg-subtle aria-invalid:border-danger;
+  @apply min-h-[52px] w-full rounded-control border border-field bg-surface px-4 text-[15px] text-fg placeholder:text-fg-muted aria-invalid:border-sale;
 }
 @utility label {
-  @apply mb-1.5 block text-sm font-medium text-fg;
+  @apply mb-1.5 block text-[13px] font-bold text-fg;
 }
 
 @utility card {
-  @apply rounded-card border border-border bg-surface shadow-raised;
+  @apply rounded-card border border-line bg-surface;
 }
 
-/* Skip link: hidden until focused (WCAG 2.4.1). */
+@utility link-underline {
+  @apply underline decoration-1 underline-offset-4 hover:decoration-2;
+}
+
 @utility skip-link {
-  @apply sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-control focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-fg;
+  @apply sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-fg focus:px-5 focus:py-2.5 focus:text-bg;
 }

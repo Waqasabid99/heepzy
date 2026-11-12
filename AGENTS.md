@@ -17,3 +17,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Styling: use semantic tokens/utilities from `src/app/globals.css` only (no raw colours). Both light and dark themes must work. Keep WCAG 2.2 AA: labels, focus-visible, 44px targets, alt text.
 - Money is DECIMAL(12,2) PKR; format with `formatPKR()`. Orders snapshot prices and addresses.
 - Schema changes: edit `prisma/schema.prisma`, then `npm run db:migrate -- --name <change>`; commit the migration.
+- Storefront routes live in `src/app/(store)/(home)` (header overlays the dark hero) and `src/app/(store)/(shop)` (pill header). Never read `usePathname`/`useSearchParams` in shared chrome outside `<Suspense>` — it blocks prerendering on dynamic routes.
+- Catalogue reads go through `src/lib/catalog.js` (`"use cache"` + `CATALOG_TAG`); cart state through `src/lib/cart.js` and the actions in `src/actions/cart.js`.

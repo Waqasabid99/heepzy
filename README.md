@@ -115,6 +115,17 @@ The project targets WCAG 2.2 AA:
 - The mobile menu uses native `<details>`, so it works without JavaScript
 - Light and dark colour tokens are chosen for AA contrast; re-check them when the final palette lands
 
+## Design
+
+The approved look ("Reimagined Comfort") is on the Heepzy Design canvas. It uses Oswald for display text and prices, Manrope for UI and body text, a near-black ink on off-white, a lemon accent used only as a fill, pill controls and rounded image tiles. The header has two variants:
+
+- `(home)`: the header sits over the dark hero.
+- `(shop)`: a floating pill bar on every other page.
+
+The route groups under `src/app/(store)/` choose the variant.
+
+Photography is from Unsplash, used under the Unsplash License as placeholders. See `public/images/CREDITS.md`, and replace the photos with your own before launch.
+
 ## Theming / design tokens
 
 All colours, radii, shadows, fonts and motion values are **semantic tokens** in `src/app/globals.css`:

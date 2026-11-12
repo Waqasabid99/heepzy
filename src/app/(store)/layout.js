@@ -1,14 +1,13 @@
-import { SiteHeader } from "@/components/layout/site-header";
+import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { SiteFooter } from "@/components/layout/site-footer";
 
+/** Shared storefront chrome. Each route group's layout adds the matching header variant. */
 export default function StoreLayout({ children }) {
   return (
-    <>
-      <SiteHeader />
-      <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
-        {children}
-      </main>
+    <div className="relative flex flex-1 flex-col">
+      <AnnouncementBar />
+      {children}
       <SiteFooter />
-    </>
+    </div>
   );
 }

@@ -100,7 +100,7 @@ export function AuthForm({ mode = "login" }) {
         />
       </div>
 
-      <p id="auth-error" role="alert" aria-live="assertive" className="min-h-5 text-sm text-danger">
+      <p id="auth-error" role="alert" aria-live="assertive" className="min-h-5 text-sm text-sale">
         {error}
       </p>
 
