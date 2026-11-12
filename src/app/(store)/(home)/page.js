@@ -4,6 +4,7 @@ import { getHomeCatalog } from "@/lib/catalog";
 import { getStoreSettings } from "@/lib/settings";
 import { formatPKR } from "@/lib/money";
 import { ProductShowcase } from "@/components/store/product-showcase";
+import { ScrollReveal } from "@/components/motion/scroll-reveal";
 import hero from "../../../../public/images/hero/hero.jpg";
 import elevate from "../../../../public/images/campaign/elevate.jpg";
 import cityStride from "../../../../public/images/lifestyle/city-stride.jpg";
@@ -32,7 +33,7 @@ export default async function HomePage() {
     <>
       {/* ───────── Hero ─────────
           Pure black (not the panel token) so the studio photo blends seamlessly in both themes. */}
-      <section aria-labelledby="hero-title" className="px-3 sm:px-5">
+      <section aria-labelledby="hero-title" className="px-3 pt-3 sm:px-5 sm:pt-4">
         <div className="relative mx-auto max-w-content overflow-hidden rounded-panel bg-black text-on-panel">
           <div className="grid gap-8 px-5 pt-36 pb-8 sm:px-10 sm:pt-32 lg:min-h-[720px] lg:grid-cols-[1fr_1.15fr] lg:pb-10">
             <div className="relative z-10 flex flex-col justify-between gap-10 lg:py-6">
@@ -160,14 +161,14 @@ export default async function HomePage() {
       {/* ───────── Products ───────── */}
       <section aria-labelledby="upgrade-title" className="container-page pt-28 lg:pt-36">
         <div className="mb-9 flex flex-wrap items-end justify-between gap-6">
-          <h2 id="upgrade-title" className="heading text-[clamp(40px,4.4vw,64px)]">
+          <ScrollReveal as="h2" id="upgrade-title" className="heading text-[clamp(40px,4.4vw,64px)]">
             Your everyday
             <br />
             style upgrade
-          </h2>
-          <p className="max-w-sm text-fg-muted sm:text-right">
+          </ScrollReveal>
+          <ScrollReveal as="p" lag={0.12} className="max-w-sm text-fg-muted sm:text-right">
             Level up your daily look with shoes made for every move — from school runs to weekend plans.
-          </p>
+          </ScrollReveal>
         </div>
         <ProductShowcase products={products} categories={categories} />
       </section>
@@ -182,24 +183,48 @@ export default async function HomePage() {
             View all
           </Link>
         </div>
-        <ul className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        {/* Expanding panels: hover/focus widens a tile (see .cat-accordion in globals.css). */}
+        <ul className="cat-accordion">
           {categories
             .filter((c) => c.imageUrl)
             .map((c) => (
               <li key={c.slug}>
-                <Link href={`/products?category=${c.slug}`} className="group flex flex-col gap-3">
-                  <span className="relative block aspect-[3/4] overflow-hidden rounded-tile bg-muted">
-                    <Image
-                      src={c.imageUrl}
-                      alt=""
-                      fill
-                      sizes="(min-width: 1024px) 18vw, 45vw"
-                      className="object-cover transition-transform duration-700 ease-out-soft group-hover:scale-[1.04]"
-                    />
+                <Link
+                  href={`/products?category=${c.slug}`}
+                  className="group relative block size-full overflow-hidden rounded-tile bg-muted text-on-panel"
+                >
+                  <Image
+                    src={c.imageUrl}
+                    alt=""
+                    fill
+                    sizes="(min-width: 1024px) 45vw, 50vw"
+                    className="object-cover transition-transform duration-700 ease-out-soft group-hover:scale-[1.04]"
+                  />
+                  {/* Scrim keeps the label legible on any photo. */}
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-panel/85 to-transparent"
+                  />
+                  <span className="absolute inset-x-0 bottom-0 p-4 sm:p-6">
+                    <span className="block font-display text-2xl leading-tight font-medium sm:text-[28px]">
+                      {c.name}
+                    </span>
+                    <span className="cat-extra block text-[13px] text-on-panel-muted">{c.count} styles</span>
                   </span>
-                  <span className="flex items-baseline justify-between gap-2">
-                    <span className="font-display text-2xl font-medium">{c.name}</span>
-                    <span className="text-[13px] text-fg-muted">{c.count} styles</span>
+                  {/* Absolutely positioned so it never squeezes the name on narrow (collapsed) tiles. */}
+                  <span className="cat-extra absolute right-6 bottom-6 hidden items-center gap-2 rounded-full bg-accent px-4 py-2 text-[13px] font-bold whitespace-nowrap text-accent-fg sm:inline-flex">
+                    Shop now
+                    <svg
+                      aria-hidden="true"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                    >
+                      <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
                   </span>
                 </Link>
               </li>

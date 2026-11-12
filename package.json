@@ -25,6 +25,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "better-auth": "^1.7.22",
     "dotenv": "^18.0.10",
+    "motion": "^14.13.0",
     "next": "16.4.6",
     "prisma": "^7.10.1",
     "react": "19.3.0",

@@ -10,6 +10,17 @@ import { toPlain } from "@/lib/serialize";
 export const CATALOG_TAG = "catalog";
 export const PAGE_SIZE = 12;
 
+/** Sort options shown in the shop's Sort menu, in display order. */
+export const SORTS = {
+  featured: { label: "Featured", orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }] },
+  newest: { label: "Date, new to old", orderBy: [{ createdAt: "desc" }] },
+  oldest: { label: "Date, old to new", orderBy: [{ createdAt: "asc" }] },
+  "price-asc": { label: "Price, low to high", orderBy: [{ basePrice: "asc" }] },
+  "price-desc": { label: "Price, high to low", orderBy: [{ basePrice: "desc" }] },
+  "name-asc": { label: "Alphabetically, A–Z", orderBy: [{ name: "asc" }] },
+  "name-desc": { label: "Alphabetically, Z–A", orderBy: [{ name: "desc" }] },
+};
+
 const GENDER_PARAM = { men: "MEN", women: "WOMEN", kids: "KIDS", unisex: "UNISEX" };
 const GENDER_LABEL = { MEN: "Men", WOMEN: "Women", KIDS: "Kids", UNISEX: "Unisex" };
 
@@ -22,7 +33,7 @@ const cardSelect = {
   compareAtPrice: true,
   isFeatured: true,
   createdAt: true,
-  images: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true, alt: true } },
+  images: { orderBy: { sortOrder: "asc" }, take: 6, select: { url: true, alt: true, color: true } },
   categories: { select: { name: true, slug: true }, take: 1 },
   variants: { where: { isActive: true }, select: { colorHex: true, color: true, stock: true } },
 };
@@ -42,7 +53,8 @@ function toCard(p) {
     price,
     compareAt: onSale ? compareAt : null,
     badge: onSale ? `−${Math.round(((compareAt - price) / compareAt) * 100)}%` : p.isFeatured ? "New" : null,
-    image: p.images[0] ?? null,
+    image: p.images[0] ? { url: p.images[0].url, alt: p.images[0].alt } : null,
+    images: p.images.map((i) => ({ url: i.url, alt: i.alt, color: i.color })),
     colours: colours.map(([name, hex]) => ({ name, hex })),
     soldOut: p.variants.every((v) => v.stock <= 0),
   };
@@ -86,7 +98,7 @@ export function parseFilters(sp = {}) {
     const n = Number.parseInt(one(v), 10);
     return Number.isFinite(n) && n >= 0 ? Math.min(n, 10_000_000) : null;
   };
-  const sort = ["featured", "newest", "price-asc", "price-desc"].includes(one(sp.sort)) ? one(sp.sort) : "featured";
+  const sort = Object.hasOwn(SORTS, one(sp.sort)) ? one(sp.sort) : "featured";
   const clean = (arr, re) => arr.filter((s) => typeof s === "string" && re.test(s)).slice(0, 20);
 
   return {
@@ -102,7 +114,15 @@ export function parseFilters(sp = {}) {
   };
 }
 
-export async function listProducts(filters) {
+/** Max pages a single "through" request may return (shareable ?page=N links). */
+export const MAX_THROUGH_PAGES = 10;
+
+/**
+ * mode "page": just that page (infinite scroll's next batch).
+ * mode "through": pages 1…N in one go (initial render of /products?page=N,
+ * so refresh/back restores the scrolled list; also the no-JS fallback).
+ */
+export async function listProducts(filters, mode = "page") {
   "use cache";
   cacheTag(CATALOG_TAG);
   cacheLife("minutes");
@@ -126,20 +146,22 @@ export async function listProducts(filters) {
       : {}),
     ...(q ? { OR: [{ name: { contains: q } }, { shortDescription: { contains: q } }] } : {}),
   };
-  const orderBy =
-    sort === "newest"
-      ? [{ createdAt: "desc" }]
-      : sort === "price-asc"
-        ? [{ basePrice: "asc" }]
-        : sort === "price-desc"
-          ? [{ basePrice: "desc" }]
-          : [{ isFeatured: "desc" }, { createdAt: "desc" }];
+  // `id` tiebreaker keeps ordering stable so pages never repeat or skip items.
+  const orderBy = [...SORTS[sort].orderBy, { id: "asc" }];
+  const through = mode === "through";
+  const last = through ? Math.min(page, MAX_THROUGH_PAGES) : page;
 
   const [total, rows] = await Promise.all([
     db.product.count({ where }),
-    db.product.findMany({ where, orderBy, skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE, select: cardSelect }),
+    db.product.findMany({
+      where,
+      orderBy,
+      skip: through ? 0 : (page - 1) * PAGE_SIZE,
+      take: through ? last * PAGE_SIZE : PAGE_SIZE,
+      select: cardSelect,
+    }),
   ]);
-  return { total, page, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)), products: rows.map(toCard) };
+  return { total, page: last, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)), products: rows.map(toCard) };
 }
 
 export async function getFacets() {
@@ -147,17 +169,20 @@ export async function getFacets() {
   cacheTag(CATALOG_TAG);
   cacheLife("hours");
 
-  const [categories, sizes] = await Promise.all([
+  const [categories, sizes, price] = await Promise.all([
     db.category.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },
       select: { name: true, slug: true },
     }),
     db.productVariant.findMany({ where: { isActive: true }, distinct: ["size"], select: { size: true } }),
+    db.product.aggregate({ where: { status: "ACTIVE", deletedAt: null }, _max: { basePrice: true } }),
   ]);
   return {
     categories,
     sizes: sizes.map((s) => s.size).sort((a, b) => Number(a) - Number(b)),
+    // Slider ceiling: the most expensive product, rounded up to the next Rs 1,000.
+    priceMax: Math.ceil(Number(price._max.basePrice ?? 0) / 1000) * 1000 || 20000,
   };
 }
 
@@ -231,7 +256,7 @@ export async function getProduct(slug) {
             eu,
             uk,
             us,
-            cm: footLengthCm,
+            cm: footLengthCm == null ? null : Number(footLengthCm).toFixed(1),
           })),
         }
       : null,
@@ -272,6 +297,11 @@ export async function getSizeCharts() {
     id: c.id,
     name: c.name,
     description: c.description,
-    entries: c.entries.map(({ eu, uk, us, footLengthCm }) => ({ eu, uk, us, cm: footLengthCm })),
+    entries: c.entries.map(({ eu, uk, us, footLengthCm }) => ({
+      eu,
+      uk,
+      us,
+      cm: footLengthCm == null ? null : Number(footLengthCm).toFixed(1),
+    })),
   }));
 }

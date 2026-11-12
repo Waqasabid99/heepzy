@@ -14,7 +14,7 @@ export const NAV = [
 
 const STYLES = {
   overlay: {
-    header: "absolute inset-x-0 top-10 z-30 px-3 sm:px-5",
+    header: "absolute inset-x-0 top-[52px] z-30 px-3 sm:top-[60px] sm:px-5",
     bar: "mx-auto flex max-w-content flex-wrap items-center justify-between gap-4 px-5 py-6 text-on-panel sm:px-10",
     list: "border border-panel-line",
     link: "hover:bg-on-panel/10 aria-[current=page]:bg-on-panel aria-[current=page]:text-black",

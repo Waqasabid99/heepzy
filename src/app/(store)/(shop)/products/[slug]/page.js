@@ -32,11 +32,11 @@ async function ProductDetails({ params }) {
   const product = await getProduct(slug);
   if (!product) notFound();
   const [settings, related] = await Promise.all([getStoreSettings(), getRelatedProducts(slug, product.category?.slug)]);
-  const [main, ...rest] = product.images;
+  const single = product.images.length === 1;
 
   return (
-    <div className="container-page pt-10 pb-28">
-      <nav aria-label="Breadcrumb" className="mb-6 text-[13px] text-fg-muted">
+    <div className="container-page pt-4 pb-28">
+      <nav aria-label="Breadcrumb" className="mb-4 text-[13px] text-fg-muted short:sr-only">
         <ol className="flex flex-wrap gap-2">
           <li>
             <Link href="/" className="hover:text-fg">
@@ -60,72 +60,80 @@ async function ProductDetails({ params }) {
         </ol>
       </nav>
 
-      <div className="grid items-start gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
-        {/* Gallery */}
-        <section aria-label="Product images" className="flex flex-col gap-3.5 lg:sticky lg:top-28">
-          <div className="relative aspect-square overflow-hidden rounded-[28px] bg-muted">
-            {main ? (
-              <Image
-                src={main.url}
-                alt={main.alt}
-                fill
-                priority
-                sizes="(min-width: 1024px) 52vw, 100vw"
-                className="object-cover"
-              />
-            ) : null}
-            {product.compareAt ? (
-              <span className="absolute top-5 left-5 rounded-full bg-sale px-3.5 py-1.5 text-xs font-bold text-white">
-                Save {formatPKR(product.compareAt - product.price)}
-              </span>
-            ) : null}
-          </div>
-          {rest.length ? (
-            <div className="grid grid-cols-4 gap-3.5">
-              {rest.map((img) => (
-                <div key={img.url} className="relative aspect-square overflow-hidden rounded-[18px] bg-muted">
-                  <Image src={img.url} alt={img.alt} fill sizes="12vw" className="object-cover" />
-                </div>
-              ))}
-            </div>
-          ) : null}
+      <div className="grid items-start gap-10 lg:grid-cols-[1.7fr_1fr] lg:gap-14">
+        {/* Gallery: 2-column grid on desktop, swipeable carousel on phones */}
+        <section aria-label="Product images" className="min-w-0">
+          <ul className="-mx-5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-5 pb-2 sm:mx-0 sm:px-0 md:grid md:grid-cols-2 md:overflow-visible md:pb-0">
+            {product.images.map((img, i) => (
+              <li
+                key={img.url}
+                className={`relative aspect-square w-[86%] shrink-0 snap-start overflow-hidden bg-muted md:w-auto ${single ? "md:col-span-2" : ""}`}
+              >
+                <Image
+                  src={img.url}
+                  alt={img.alt}
+                  fill
+                  priority={i < 2}
+                  sizes={
+                    single
+                      ? "(min-width: 1024px) 60vw, 90vw"
+                      : "(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 86vw"
+                  }
+                  className="object-cover"
+                />
+                {i === 0 && product.compareAt ? (
+                  <span className="absolute top-4 left-4 rounded-[5px] bg-sale px-2.5 py-1 text-[11px] font-semibold tracking-wide text-white">
+                    −{Math.round(((product.compareAt - product.price) / product.compareAt) * 100)}%
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
         </section>
 
-        {/* Buy box */}
-        <section aria-labelledby="pdp-title" className="flex flex-col gap-7">
+        {/* Buy box — sticks while the gallery scrolls */}
+        <section aria-labelledby="pdp-title" className="flex flex-col gap-4 lg:sticky lg:top-28 short:gap-3">
           <div>
-            <p className="mb-2 text-[13px] font-semibold text-fg-muted">
-              {[product.gender, product.category?.name].filter(Boolean).join(" · ")}
-            </p>
-            <h1 id="pdp-title" className="display text-[clamp(44px,4.6vw,68px)] leading-none font-medium">
+            <h1
+              id="pdp-title"
+              className="text-2xl leading-tight font-semibold tracking-[0.04em] uppercase short:text-xl"
+            >
               {product.name}
             </h1>
-            <div className="mt-4 flex flex-wrap items-baseline gap-3">
-              <p className={`font-display text-[32px] font-medium ${product.compareAt ? "text-sale" : ""}`}>
-                {formatPKR(product.price)}
-              </p>
-              {product.compareAt ? (
-                <p className="text-fg-muted">
-                  <span className="sr-only">Was </span>
-                  <s>{formatPKR(product.compareAt)}</s>
-                </p>
-              ) : null}
-              {product.rating.count > 0 ? (
-                <a href="#reviews" className="text-[13px] link-underline">
-                  {product.rating.average.toFixed(1)} ★ · {product.rating.count} reviews
-                </a>
-              ) : null}
-            </div>
-            <p className="mt-1.5 text-[13px] text-fg-muted">
-              {settings.pricesIncludeTax ? "Inclusive of GST." : "Excludes GST."} Delivery calculated at checkout.
-            </p>
           </div>
 
-          <p className="text-fg-muted">{product.shortDescription}</p>
+          <BuyBox
+            product={product}
+            price={
+              <div className="flex flex-wrap items-baseline gap-3">
+                {product.compareAt ? (
+                  <s className="text-base text-fg-muted">
+                    <span className="sr-only">Was </span>
+                    {formatPKR(product.compareAt)}
+                  </s>
+                ) : null}
+                <p className={`text-xl font-semibold tracking-[0.02em] ${product.compareAt ? "text-sale" : ""}`}>
+                  {product.compareAt ? <span className="sr-only">Now </span> : null}
+                  {formatPKR(product.price)}
+                </p>
+                {product.compareAt ? (
+                  <span className="rounded-[5px] bg-sale px-2 py-0.5 text-xs font-semibold text-white">
+                    Save {formatPKR(product.compareAt - product.price)}
+                  </span>
+                ) : null}
+                {product.rating.count > 0 ? (
+                  <a href="#reviews" className="text-[13px] link-underline">
+                    {product.rating.average.toFixed(1)} ★ · {product.rating.count} reviews
+                  </a>
+                ) : null}
+                <p className="text-xs text-fg-muted">
+                  {settings.pricesIncludeTax ? "Inclusive of GST." : "Excludes GST."} Delivery calculated at checkout.
+                </p>
+              </div>
+            }
+          />
 
-          <BuyBox product={product} />
-
-          <ul className="grid gap-3 rounded-[20px] bg-muted p-5 text-sm">
+          <ul className="grid gap-3 border-y border-line py-5 text-sm">
             {settings.freeDeliveryEnabled && settings.freeDeliveryThreshold ? (
               <li className="flex gap-3">
                 <TruckIcon />
@@ -152,54 +160,53 @@ async function ProductDetails({ params }) {
             ) : null}
           </ul>
 
-          <div className="border-t border-line">
-            <details open className="group border-b border-line">
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between font-bold">
-                Details &amp; materials
-                <span aria-hidden="true" className="text-xl transition-transform group-open:rotate-45">
-                  +
-                </span>
-              </summary>
-              <div className="pb-5 text-sm text-fg-muted">
-                <p>{product.description}</p>
-                <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
-                  {product.material ? (
-                    <>
-                      <dt className="font-semibold text-fg">Material</dt>
-                      <dd>{product.material}</dd>
-                    </>
-                  ) : null}
-                  {product.brand ? (
-                    <>
-                      <dt className="font-semibold text-fg">Brand</dt>
-                      <dd>{product.brand}</dd>
-                    </>
-                  ) : null}
-                </dl>
-              </div>
-            </details>
-            <details className="group border-b border-line">
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between font-bold">
+          <div>
+            <h2 className="mb-2 font-bold">Product description</h2>
+            <p className="text-sm leading-relaxed text-fg-muted">{product.description}</p>
+            <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
+              {product.category ? (
+                <>
+                  <dt className="font-semibold">Category</dt>
+                  <dd className="text-fg-muted">
+                    {[product.gender, product.category.name].filter(Boolean).join(" · ")}
+                  </dd>
+                </>
+              ) : null}
+              {product.material ? (
+                <>
+                  <dt className="font-semibold">Material</dt>
+                  <dd className="text-fg-muted">{product.material}</dd>
+                </>
+              ) : null}
+              {product.brand ? (
+                <>
+                  <dt className="font-semibold">Brand</dt>
+                  <dd className="text-fg-muted">{product.brand}</dd>
+                </>
+              ) : null}
+            </dl>
+            <details className="group mt-4 border-t border-line">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-sm font-bold">
                 Delivery &amp; returns
                 <span aria-hidden="true" className="text-xl transition-transform group-open:rotate-45">
                   +
                 </span>
               </summary>
-              <p className="pb-5 text-sm text-fg-muted">
+              <p className="pb-4 text-sm text-fg-muted">
                 Delivered in 2–4 working days to major cities and 3–6 days elsewhere in Pakistan.
                 {settings.returnsEnabled
                   ? ` Unworn pairs can be exchanged or returned within ${settings.returnWindowDays} days.`
                   : ""}
               </p>
             </details>
-            <details className="group border-b border-line">
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between font-bold">
+            <details className="group border-t border-b border-line">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-sm font-bold">
                 Care guide
                 <span aria-hidden="true" className="text-xl transition-transform group-open:rotate-45">
                   +
                 </span>
               </summary>
-              <p className="pb-5 text-sm text-fg-muted">
+              <p className="pb-4 text-sm text-fg-muted">
                 Wipe clean with a soft, damp cloth. Air dry away from direct heat. Use shoe trees for leather pairs.
               </p>
             </details>
@@ -248,7 +255,7 @@ async function ProductDetails({ params }) {
           <h2 id="rel-title" className="mb-9 heading text-[clamp(36px,3.6vw,52px)]">
             You may also like
           </h2>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-x-4 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} sizes="(min-width: 1024px) 23vw, (min-width: 640px) 45vw, 92vw" />
             ))}
@@ -265,7 +272,7 @@ function ProductSkeleton() {
       <p className="sr-only" role="status">
         Loading product…
       </p>
-      <div className="aspect-square rounded-[28px] bg-muted" />
+      <div className="aspect-square bg-muted" />
       <div className="flex flex-col gap-5">
         <div className="h-16 w-3/4 rounded-2xl bg-muted" />
         <div className="h-10 w-40 rounded-2xl bg-muted" />

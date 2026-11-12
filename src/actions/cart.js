@@ -48,7 +48,7 @@ export async function addToCart(_prev, formData) {
   });
 
   refresh();
-  return { ok: true, message: `${variant.product.name} (EU ${variant.size}) added to your cart.` };
+  return { ok: true, message: `${variant.product.name} (EU ${variant.size}) added to your bag.` };
 }
 
 const updateSchema = z.object({

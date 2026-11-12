@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NewsletterForm } from "./newsletter-form";
+import { DrawerItem, FooterDrawer } from "@/components/motion/footer-drawer";
 
 const COLUMNS = [
   {
@@ -29,14 +30,22 @@ const COLUMNS = [
 export function SiteFooter() {
   return (
     <footer className="mt-auto px-3 pb-3 sm:px-5 sm:pb-5">
-      <div className="mx-auto max-w-content overflow-hidden rounded-panel bg-panel p-5 text-on-panel sm:p-10">
-        <p
+      <FooterDrawer className="mx-auto max-w-content overflow-hidden rounded-panel bg-panel p-5 text-on-panel sm:p-10">
+        <DrawerItem
+          as="p"
           aria-hidden="true"
+          from={0.05}
+          to={0.8}
+          distance={160}
           className="text-center font-display text-[clamp(88px,19vw,300px)] leading-[0.82] font-semibold tracking-[-0.02em] text-accent select-none"
         >
           Heepzy
-        </p>
-        <div className="mt-6 flex flex-col gap-10 rounded-card bg-accent p-6 text-[#111] sm:p-10">
+        </DrawerItem>
+        <DrawerItem
+          from={0.25}
+          to={1}
+          className="mt-6 flex flex-col gap-10 rounded-card bg-accent p-6 text-[#111] sm:p-10"
+        >
           <div className="flex flex-wrap items-end justify-between gap-8">
             <h2 className="font-display text-[clamp(36px,4vw,56px)] leading-[1.02] font-semibold">
               Step into your
@@ -80,8 +89,8 @@ export function SiteFooter() {
             <p>© 2026 Heepzy. All prices in PKR.</p>
             <p>Photography: Unsplash</p>
           </div>
-        </div>
-      </div>
+        </DrawerItem>
+      </FooterDrawer>
     </footer>
   );
 }

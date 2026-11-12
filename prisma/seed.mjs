@@ -68,9 +68,20 @@ async function seedStore() {
     create: {
       id: 1,
       storeName: "Heepzy",
+      announcementText: "Flash Drop — up to 25% off selected styles. Free delivery over Rs 5,000",
+      announcementLink: "/offers",
       freeDeliveryEnabled: true,
       freeDeliveryThreshold: "5000.00",
       returnWindowDays: 7,
+    },
+  });
+
+  // Fill the announcement for stores seeded before the field existed.
+  await db.storeSettings.updateMany({
+    where: { id: 1, announcementText: null },
+    data: {
+      announcementText: "Flash Drop — up to 25% off selected styles. Free delivery over Rs 5,000",
+      announcementLink: "/offers",
     },
   });
 
@@ -460,6 +471,25 @@ async function seedCatalogue() {
             stock: (idx + i) % 7 === 0 ? 0 : (idx + i) % 5 === 0 ? 2 : 8 + ((idx * 3 + i) % 9),
           })),
         },
+      },
+    });
+  }
+
+  // Second view per product (close-up crop of the same photo) for the card hover swap.
+  // Idempotent: only added when the product has a single image.
+  for (const [slug, name, , , , , color] of PRODUCTS) {
+    const product = await db.product.findUnique({
+      where: { slug },
+      select: { id: true, _count: { select: { images: true } } },
+    });
+    if (!product || product._count.images > 1) continue;
+    await db.productImage.create({
+      data: {
+        productId: product.id,
+        url: `/images/products/${IMAGE_FILE[slug] ?? slug}-detail.jpg`,
+        alt: `${name} in ${color}, close-up detail`,
+        color,
+        sortOrder: 1,
       },
     });
   }

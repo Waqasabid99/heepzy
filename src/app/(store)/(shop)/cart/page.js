@@ -47,7 +47,7 @@ async function CartContents() {
             <li key={l.id} className="flex gap-5 py-6">
               <Link
                 href={`/products/${l.slug}`}
-                className="relative size-28 shrink-0 overflow-hidden rounded-[18px] bg-muted sm:size-32"
+                className="relative size-28 shrink-0 overflow-hidden bg-muted sm:size-32"
               >
                 {l.image ? (
                   <Image src={l.image.url} alt={l.image.alt} fill sizes="128px" className="object-cover" />
