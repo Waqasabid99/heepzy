@@ -43,3 +43,23 @@ Unsplash License does not grant trademark rights.
 | products/pastel-court.jpg      | photo-1595950653106-6c9ebd614d3a |
 
 Source URL pattern: `https://images.unsplash.com/<photo id>`.
+
+### Eastern, festive & campaign photography (added 2026-11-12)
+
+| File                                  | Unsplash photo                   |
+| ------------------------------------- | -------------------------------- |
+| campaign/mega-sale.jpg                | photo-1779957684351-837b4acc28a7 |
+| campaign/women.jpg                    | photo-1721324807083-e9ddaa99310e |
+| campaign/men.jpg                      | photo-1785613590152-63d713bc94b4 |
+| campaign/desi-drip.jpg                | photo-1701290560828-14b87350ede8 |
+| campaign/shaadi.jpg                   | photo-1583878544826-8f8c418033ed |
+| campaign/eid.jpg                      | photo-1771513931546-f32b8d93e6aa |
+| categories/khussa.jpg                 | photo-1777980652216-68112200e3c8 |
+| products/gulbahar-khussa.jpg          | photo-1777980157996-6f689bb393ab |
+| products/gulbahar-khussa-detail.jpg   | photo-1777980157986-6dcf6ab07790 |
+| products/zari-khussa.jpg (+ detail)   | photo-1777980652216-68112200e3c8 |
+| products/kolhapuri-chappal.jpg        | photo-1777979926350-bd684446744b |
+| products/kolhapuri-chappal-detail.jpg | photo-1777979926381-46ffc1395cf8 |
+| products/kundan-sandal.jpg (+ detail) | photo-1777979925976-723230e37453 |
+| products/sitara-block-heel.jpg (+ d.) | photo-1784821926301-400ec420e621 |
+| products/zeenat-gold-pump.jpg (+ d.)  | photo-1784821926360-35da76a460b3 |

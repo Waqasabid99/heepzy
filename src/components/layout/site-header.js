@@ -1,146 +1,128 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import Form from "next/form";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { Menu, Search, User } from "@/components/ui/icons";
 import { CartLink, CartLinkFallback } from "./cart-link";
 import { NavLink } from "./nav-link";
 
 export const NAV = [
-  { href: "/", label: "Home", match: "/" },
-  { href: "/products?gender=men", label: "Men" },
+  { href: "/products?sort=newest", label: "New in" },
   { href: "/products?gender=women", label: "Women" },
+  { href: "/products?gender=men", label: "Men" },
   { href: "/products?category=sneakers", label: "Sneakers" },
-  { href: "/offers", label: "Offers", match: "/offers", dot: true },
+  { href: "/products?category=khussa", label: "Khussa" },
+  { href: "/products?category=formal", label: "Formal" },
+  { href: "/offers", label: "Sale", match: "/offers", sale: true },
 ];
 
-const STYLES = {
-  overlay: {
-    header: "absolute inset-x-0 top-[52px] z-30 px-3 sm:top-[60px] sm:px-5",
-    bar: "mx-auto flex max-w-content flex-wrap items-center justify-between gap-4 px-5 py-6 text-on-panel sm:px-10",
-    list: "border border-panel-line",
-    link: "hover:bg-on-panel/10 aria-[current=page]:bg-on-panel aria-[current=page]:text-black",
-    icon: "inline-grid size-11 place-items-center rounded-full border border-panel-line text-on-panel transition-colors hover:bg-on-panel/10",
-    toggle: "border border-panel-line text-on-panel hover:bg-on-panel/10",
-  },
-  bar: {
-    header: "sticky top-0 z-30 px-3 pt-3 sm:px-5 sm:pt-4",
-    bar: "mx-auto flex max-w-content flex-wrap items-center justify-between gap-4 rounded-full border border-line bg-surface/90 py-2.5 pr-2.5 pl-6 backdrop-blur",
-    list: "",
-    link: "hover:bg-muted aria-[current=page]:bg-fg aria-[current=page]:text-bg",
-    icon: "btn-icon",
-    toggle: "border border-line",
-  },
-};
+const iconBtn = "inline-grid size-11 shrink-0 place-items-center rounded-full text-fg transition-colors hover:bg-muted";
 
-/**
- * Two looks from the design, chosen by the route group's layout:
- *  - "overlay": light-on-dark, sits inside the home hero panel
- *  - "bar": the floating pill used on every other page
- */
-export function SiteHeader({ variant = "bar" }) {
-  const s = STYLES[variant];
-  const linkCls = `inline-flex min-h-9 items-center gap-1.5 rounded-full px-4 transition-colors ${s.link}`;
+function SearchForm({ id, className = "" }) {
+  return (
+    <Form action="/products" role="search" className={`relative ${className}`}>
+      <label htmlFor={id} className="sr-only">
+        Search shoes
+      </label>
+      <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-fg-muted" />
+      <input
+        id={id}
+        name="q"
+        type="search"
+        placeholder="Search khussa, sneakers, heels…"
+        autoComplete="off"
+        className="h-11 w-full rounded-full border border-line bg-surface pr-4 pl-10 text-sm text-fg placeholder:text-fg-muted focus-visible:border-fg focus-visible:outline-offset-1"
+      />
+    </Form>
+  );
+}
+
+/** Flat white store header (Option E1): logo, uppercase nav, search, account, theme, bag. */
+export function SiteHeader() {
+  const linkCls =
+    "inline-flex min-h-11 items-center border-b-2 border-transparent text-[13px] font-extrabold tracking-[0.08em] uppercase transition-colors hover:border-fg aria-[current=page]:border-accent";
 
   return (
-    <header className={s.header}>
-      <div className={s.bar}>
-        <Link href="/" className="font-display text-[26px] leading-none font-medium tracking-wide">
+    <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur supports-backdrop-filter:bg-surface/85">
+      <div className="container-page flex h-16 items-center gap-3 lg:h-[76px] lg:gap-8">
+        {/* Mobile menu — native disclosure, works without JS */}
+        <details className="group lg:hidden">
+          <summary aria-label="Menu" className={`${iconBtn} -ml-2.5 cursor-pointer list-none`}>
+            <Menu />
+          </summary>
+          <div className="absolute inset-x-0 top-full border-b border-line bg-surface shadow-lg">
+            <div className="container-page grid gap-3 py-4">
+              <SearchForm id="q-mobile" />
+              <nav aria-label="Mobile">
+                <ul className="grid">
+                  {NAV.map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={`flex min-h-12 items-center border-b border-line text-sm font-extrabold tracking-[0.08em] uppercase ${
+                          item.sale ? "text-brand" : ""
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </details>
+
+        <Link
+          href="/"
+          aria-label="Heepzy home"
+          className="font-display text-[28px] leading-none font-semibold tracking-[0.03em] uppercase lg:text-[34px]"
+        >
           Heepzy
+          <span aria-hidden="true" className="text-accent">
+            .
+          </span>
         </Link>
 
-        <nav aria-label="Primary" className="hidden md:block">
-          <ul className={`flex items-center gap-1 rounded-full p-1.5 text-[13px] font-semibold ${s.list}`}>
+        <nav aria-label="Primary" className="hidden flex-1 lg:block">
+          <ul className="flex items-center gap-6 xl:gap-7">
             {NAV.map((item) => {
-              const label = (
-                <>
-                  {item.label}
-                  {item.dot ? <span aria-hidden="true" className="size-1.5 rounded-full bg-accent" /> : null}
-                </>
-              );
+              const cls = `${linkCls} ${item.sale ? "text-brand" : ""}`;
               return (
                 <li key={item.href}>
-                  <Suspense
-                    fallback={
-                      <Link href={item.href} className={linkCls}>
-                        {label}
-                      </Link>
-                    }
-                  >
-                    <NavLink href={item.href} match={item.match} className={linkCls}>
-                      {label}
-                    </NavLink>
-                  </Suspense>
+                  {item.match ? (
+                    <Suspense
+                      fallback={
+                        <Link href={item.href} className={cls}>
+                          {item.label}
+                        </Link>
+                      }
+                    >
+                      <NavLink href={item.href} match={item.match} className={cls}>
+                        {item.label}
+                      </NavLink>
+                    </Suspense>
+                  ) : (
+                    <Link href={item.href} className={cls}>
+                      {item.label}
+                    </Link>
+                  )}
                 </li>
               );
             })}
           </ul>
         </nav>
 
-        <div className="flex items-center gap-2">
-          <Link href="/products" aria-label="Search shoes" className={s.icon}>
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="M20 20l-3.5-3.5" />
-            </svg>
-          </Link>
-          <ThemeToggle className={s.toggle} />
-          <Link href="/account" aria-label="Your account" className={s.icon}>
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-            >
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
-            </svg>
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          <SearchForm id="q-desktop" className="mr-2 hidden w-64 md:block xl:w-72" />
+          <ThemeToggle className="text-fg" />
+          <Link href="/account" aria-label="Your account" className={iconBtn}>
+            <User />
           </Link>
           <Suspense fallback={<CartLinkFallback />}>
             <CartLink />
           </Suspense>
         </div>
-
-        {/* Mobile navigation — native disclosure, works without JS */}
-        <details className="w-full md:hidden">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold">
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-            >
-              <path d="M4 7h16M4 12h16M4 17h10" />
-            </svg>
-            Menu
-          </summary>
-          <nav aria-label="Mobile">
-            <ul className="grid gap-1 pb-2">
-              {NAV.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="block rounded-xl px-3 py-2.5 font-semibold hover:bg-accent hover:text-accent-fg"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </details>
       </div>
     </header>
   );

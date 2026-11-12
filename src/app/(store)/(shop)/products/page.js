@@ -75,11 +75,11 @@ async function Collection({ searchParams }) {
     ...(f.sale ? [{ label: "On sale", href: hrefWith(f, { sale: false }) }] : []),
     ...(f.min != null || f.max != null
       ? [
-          {
-            label: f.max != null ? `${formatPKR(f.min ?? 0)} – ${formatPKR(f.max)}` : `From ${formatPKR(f.min)}`,
-            href: hrefWith(f, { min: null, max: null }),
-          },
-        ]
+        {
+          label: f.max != null ? `${formatPKR(f.min ?? 0)} – ${formatPKR(f.max)}` : `From ${formatPKR(f.min)}`,
+          href: hrefWith(f, { min: null, max: null }),
+        },
+      ]
       : []),
     ...(f.q ? [{ label: `“${f.q}”`, href: hrefWith(f, { q: "" }) }] : []),
   ];
@@ -178,7 +178,7 @@ async function Collection({ searchParams }) {
                           name="category"
                           value={c.slug}
                           defaultChecked={f.category.includes(c.slug)}
-                          className="size-[18px] accent-fg"
+                          className="size-4.5 accent-fg"
                         />
                         {c.name}
                       </label>
@@ -221,7 +221,7 @@ async function Collection({ searchParams }) {
                     name="sale"
                     value="1"
                     defaultChecked={f.sale}
-                    className="size-[18px] accent-fg"
+                    className="size-4.5 accent-fg"
                   />
                   On sale only
                 </label>

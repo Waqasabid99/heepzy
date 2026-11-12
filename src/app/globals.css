@@ -2,7 +2,7 @@
 
 /*
  * ─────────────────────────────────────────────────────────────
- * Heepzy design tokens — "Reimagined Comfort"
+ * Heepzy design tokens — "Mela" (Option E1, crimson)
  * ─────────────────────────────────────────────────────────────
  * Source of truth: the Heepzy Design canvas (Tokens board).
  * 1. Raw semantic tokens (--hz-*) on :root (light, default) and
@@ -12,8 +12,9 @@
  *    bg-accent / text-accent-fg, bg-panel / text-on-panel, text-sale…
  * 3. Components use semantic utilities only — never raw colours.
  *
- * Accent rule: the lemon accent is a FILL (with text-accent-fg on
- * top), never text on light grounds — it fails contrast there.
+ * Brand: crimson red is the accent FILL (white text on top). For red
+ * TEXT use text-brand (tuned per theme for contrast). Saffron and
+ * emerald are campaign fills only, always paired with their -fg.
  */
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
@@ -24,22 +25,32 @@
 :root {
   color-scheme: light;
 
-  --hz-bg: #fafaf7;
+  --hz-bg: #ffffff;
   --hz-surface: #ffffff;
-  --hz-muted: #f1f1ed;
-  --hz-sunken: #e9e9e3;
+  --hz-muted: #f6f4f1;
+  --hz-sunken: #ebe8e3;
   --hz-overlay: rgb(17 17 17 / 0.5);
 
   --hz-fg: #111111;
   --hz-fg-muted: #5e5e59;
-  --hz-fg-inverse: #fafaf7;
+  --hz-fg-inverse: #ffffff;
 
-  --hz-line: #e5e5df;
-  --hz-field: #cfcfc8;
+  --hz-line: #e6e3de;
+  --hz-field: #cfcbc4;
 
-  --hz-accent: #e8dc2a;
-  --hz-accent-hover: #d9cc1a;
-  --hz-accent-fg: #111111;
+  --hz-accent: #d3122a;
+  --hz-accent-hover: #b30f22;
+  --hz-accent-deep: #8e0a1a;
+  --hz-accent-fg: #ffffff;
+  --hz-brand: #c0102a;
+  --hz-flame: #f26b1d;
+
+  /* Campaign fills (same in both themes) */
+  --hz-saffron: #ffb000;
+  --hz-saffron-fg: #111111;
+  --hz-emerald: #0b7a55;
+  --hz-emerald-fg: #ffffff;
+  --hz-whatsapp: #25d366;
 
   /* Always-dark panels (hero, footer, admin sidebar) */
   --hz-panel: #0b0b0b;
@@ -48,8 +59,8 @@
   --hz-on-panel-muted: #b9b9b2;
   --hz-panel-line: rgb(245 245 240 / 0.18);
 
-  --hz-sale: #b3261e;
-  --hz-success: #2f6b3a;
+  --hz-sale: #c0102a;
+  --hz-success: #0a7a3a;
   --hz-success-bg: #e3f0e4;
   --hz-warning: #7a5300;
   --hz-warning-bg: #fbefc9;
@@ -76,9 +87,12 @@
   --hz-line: #2a2a27;
   --hz-field: #45453f;
 
-  --hz-accent: #ede13a;
-  --hz-accent-hover: #f5ea52;
-  --hz-accent-fg: #111111;
+  --hz-accent: #d3122a;
+  --hz-accent-hover: #e3243b;
+  --hz-accent-deep: #6e0814;
+  --hz-accent-fg: #ffffff;
+  --hz-brand: #ff6b7a;
+  --hz-flame: #e0601a;
 
   --hz-panel: #141413;
   --hz-panel-2: #222220;
@@ -95,7 +109,7 @@
   --hz-info-bg: #18273d;
   --hz-danger-bg: #3a1c18;
 
-  --hz-ring: #ede13a;
+  --hz-ring: #ffb000;
 }
 
 @theme inline {
@@ -112,6 +126,14 @@
   --color-accent: var(--hz-accent);
   --color-accent-hover: var(--hz-accent-hover);
   --color-accent-fg: var(--hz-accent-fg);
+  --color-accent-deep: var(--hz-accent-deep);
+  --color-brand: var(--hz-brand);
+  --color-flame: var(--hz-flame);
+  --color-saffron: var(--hz-saffron);
+  --color-saffron-fg: var(--hz-saffron-fg);
+  --color-emerald: var(--hz-emerald);
+  --color-emerald-fg: var(--hz-emerald-fg);
+  --color-whatsapp: var(--hz-whatsapp);
   --color-panel: var(--hz-panel);
   --color-panel-2: var(--hz-panel-2);
   --color-on-panel: var(--hz-on-panel);
@@ -129,10 +151,11 @@
 
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-heading), "Arial Narrow", ui-sans-serif, sans-serif;
+  --font-script: var(--font-hand), cursive;
 
   /* Radii → rounded-control (inputs, size pills), rounded-tile, rounded-card, rounded-panel */
   --radius-control: 0.875rem;
-  --radius-tile: 1.375rem;
+  --radius-tile: 1.125rem;
   --radius-card: 1.5rem;
   --radius-panel: 2rem;
 
@@ -188,66 +211,6 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
-    }
-  }
-}
-
-/* ───────────── Expanding category panels ─────────────
-   ≥1024px: tiles sit in a row; the hovered/focused tile grows to 3× while
-   the others narrow. The first tile is open by default. Below 1024px it is
-   a plain two-column grid with every label visible. */
-@layer components {
-  .cat-accordion {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.875rem;
-  }
-  .cat-accordion > li {
-    aspect-ratio: 3 / 4;
-  }
-
-  @media (min-width: 64rem) {
-    .cat-accordion {
-      display: flex;
-      height: 34rem;
-      gap: 0.75rem;
-    }
-    .cat-accordion > li {
-      aspect-ratio: auto;
-      flex: 1 1 0;
-      min-width: 0;
-      transition: flex-grow 0.7s var(--ease-out-soft);
-    }
-    .cat-accordion > li:first-child {
-      flex-grow: 3;
-    }
-    .cat-accordion:has(> li:hover, > li:focus-within) > li {
-      flex-grow: 1;
-    }
-    /* Must out-rank the :has() rule above (its specificity counts its arguments). */
-    .cat-accordion:has(> li:hover, > li:focus-within) > li:is(:hover, :focus-within) {
-      flex-grow: 3;
-    }
-
-    /* Count + "Shop now" only show on the open tile. */
-    .cat-accordion .cat-extra {
-      opacity: 0;
-      transform: translateY(8px);
-      transition:
-        opacity 0.4s var(--ease-out-soft),
-        transform 0.4s var(--ease-out-soft);
-    }
-    .cat-accordion > li:first-child .cat-extra,
-    .cat-accordion > li:hover .cat-extra,
-    .cat-accordion > li:focus-within .cat-extra {
-      opacity: 1;
-      transform: none;
-      transition-delay: 0.2s;
-    }
-    .cat-accordion:has(> li:hover, > li:focus-within) > li:not(:hover, :focus-within) .cat-extra {
-      opacity: 0;
-      transform: translateY(8px);
-      transition-delay: 0s;
     }
   }
 }
@@ -415,6 +378,25 @@ html:has(.modal[open]) {
 
 @utility heading {
   @apply font-display leading-[1.04] font-medium;
+}
+
+/* Handwritten accent line ("Online only", "for her") — short phrases only. */
+@utility script {
+  @apply font-script leading-none font-normal tracking-normal normal-case;
+}
+
+/* Crimson → flame campaign gradient (wallet / perks banner). */
+@utility bg-brand-gradient {
+  background-image: linear-gradient(110deg, var(--hz-accent-deep) 0%, var(--hz-accent) 50%, var(--hz-flame) 100%);
+}
+
+/* Horizontal scroller with hidden scrollbar (category circles, perk strip on mobile). */
+@utility scroll-row {
+  @apply flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @utility eyebrow {

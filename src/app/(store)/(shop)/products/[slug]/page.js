@@ -7,6 +7,7 @@ import { getStoreSettings } from "@/lib/settings";
 import { formatPKR } from "@/lib/money";
 import { BuyBox } from "@/components/store/buy-box";
 import { ProductCard } from "@/components/store/product-card";
+import { Star } from "@/components/ui/icons";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -117,13 +118,15 @@ async function ProductDetails({ params }) {
                   {formatPKR(product.price)}
                 </p>
                 {product.compareAt ? (
-                  <span className="rounded-[5px] bg-sale px-2 py-0.5 text-xs font-semibold text-white">
+                  <span className="bg-accent px-2 py-0.5 text-xs font-bold text-accent-fg">
                     Save {formatPKR(product.compareAt - product.price)}
                   </span>
                 ) : null}
                 {product.rating.count > 0 ? (
-                  <a href="#reviews" className="text-[13px] link-underline">
-                    {product.rating.average.toFixed(1)} ★ · {product.rating.count} reviews
+                  <a href="#reviews" className="inline-flex items-center gap-1 text-[13px] link-underline">
+                    {product.rating.average.toFixed(1)}
+                    <Star className="size-3.5 text-saffron" />
+                    <span aria-hidden="true">·</span> {product.rating.count} reviews
                   </a>
                 ) : null}
                 <p className="text-xs text-fg-muted">
@@ -235,9 +238,10 @@ async function ProductDetails({ params }) {
         <div className="grid gap-4">
           {product.reviews.map((r) => (
             <article key={r.id} className="flex flex-col gap-2.5 card p-7">
-              <p aria-label={`${r.rating} out of 5 stars`} className="tracking-[2px]">
-                {"★".repeat(r.rating)}
-                <span className="text-line">{"★".repeat(5 - r.rating)}</span>
+              <p role="img" aria-label={`${r.rating} out of 5 stars`} className="flex gap-0.5 text-saffron">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star key={i} filled={i < r.rating} className={`size-4 ${i < r.rating ? "" : "text-line"}`} />
+                ))}
               </p>
               {r.title ? <h3 className="font-bold">{r.title}</h3> : null}
               {r.body ? <p className="text-sm text-fg-muted">{r.body}</p> : null}

@@ -16,8 +16,10 @@ export function ProductCard({
   priority = false,
   className = "",
   sizes = "(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 92vw",
+  showSizes = true,
 }) {
   const { slug, name, subtitle, price, compareAt, badge, colours, images = [], soldOut } = product;
+  const stockSizes = product.sizes ?? [];
   const href = `/products/${slug}`;
 
   // Build the thumbnail set: [{ label, main, next }]
@@ -36,8 +38,8 @@ export function ProductCard({
 
   const discount = compareAt ? Math.round(((compareAt - price) / compareAt) * 100) : 0;
   const labels = [
-    badge === "New" ? { text: "New", cls: "bg-fg text-bg" } : null,
-    discount ? { text: `−${discount}%`, cls: "bg-sale text-white" } : null,
+    badge === "New" ? { text: "New", cls: "bg-emerald text-emerald-fg" } : null,
+    discount ? { text: `−${discount}%`, cls: "bg-accent text-accent-fg" } : null,
     soldOut ? { text: "Sold out", cls: "bg-surface text-fg" } : null,
   ].filter(Boolean);
 
@@ -75,10 +77,7 @@ export function ProductCard({
         {labels.length ? (
           <span className="absolute top-3 left-3 flex flex-col items-start gap-1">
             {labels.map((l) => (
-              <span
-                key={l.text}
-                className={`rounded-[5px] px-2.5 py-1 text-[11px] font-semibold tracking-wide ${l.cls}`}
-              >
+              <span key={l.text} className={`px-2.5 py-1 text-[11px] font-bold tracking-wide ${l.cls}`}>
                 {l.text}
               </span>
             ))}
@@ -107,24 +106,40 @@ export function ProductCard({
       ) : null}
 
       <div className="mt-3 flex flex-col gap-1">
-        <h3 className="text-[15px] leading-snug font-medium tracking-[0.01em]">
+        <h3 className="text-[13px] leading-snug font-bold tracking-[0.06em] uppercase">
           <Link href={href} className="hover:underline hover:underline-offset-4">
             {name}
           </Link>
         </h3>
         <p className="text-[13px] text-fg-muted">{subtitle}</p>
-        <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2.5 text-[15px] tracking-[0.02em]">
+        <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[15px] font-bold">
           {compareAt ? (
-            <s className="text-fg-muted">
+            <s className="text-[13px] font-semibold text-sale">
               <span className="sr-only">Was </span>
               {formatPKR(compareAt)}
             </s>
           ) : null}
-          <span className={compareAt ? "font-semibold text-sale" : "font-semibold"}>
+          <span className={compareAt ? "text-success" : ""}>
             {compareAt ? <span className="sr-only">Now </span> : null}
             {formatPKR(price)}
           </span>
+          {discount ? <span className="text-xs font-bold text-brand">Save {discount}%</span> : null}
         </p>
+        {showSizes && stockSizes.length > 0 && !soldOut ? (
+          <ul aria-label="Sizes in stock" className="mt-1.5 flex flex-wrap gap-1">
+            {stockSizes.slice(0, 7).map((s) => (
+              <li
+                key={s}
+                className="grid h-7 min-w-8 place-items-center border border-line px-1 text-[11px] text-fg-muted"
+              >
+                {s}
+              </li>
+            ))}
+            {stockSizes.length > 7 ? (
+              <li className="grid h-7 place-items-center px-1 text-[11px] text-fg-muted">+{stockSizes.length - 7}</li>
+            ) : null}
+          </ul>
+        ) : null}
       </div>
     </article>
   );

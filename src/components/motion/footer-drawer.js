@@ -8,16 +8,16 @@ const DrawerContext = createContext(null);
 
 /**
  * Footer "drawer": as the footer scrolls into view the dark panel slides up
- * from below and opens out to full width; the wordmark and the yellow card
- * follow a beat behind. Fully scroll-linked (reverses when scrolling up).
+ * from below and opens out to full width (rounded top corners flatten);
+ * its columns follow a beat behind. Fully scroll-linked (reverses on scroll up).
  */
 export function FooterDrawer({ children, className }) {
   const ref = useRef(null);
   const ready = useMotionReady();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end end"] });
-  const y = useTransform(scrollYProgress, [0, 0.85], ["18%", "0%"]);
-  const scale = useTransform(scrollYProgress, [0, 0.85], [0.9, 1]);
-  const borderRadius = useTransform(scrollYProgress, [0, 0.85], [72, 32]);
+  const y = useTransform(scrollYProgress, [0, 0.85], ["14%", "0%"]);
+  const scale = useTransform(scrollYProgress, [0, 0.85], [0.94, 1]);
+  const radius = useTransform(scrollYProgress, [0, 0.85], [48, 0]);
 
   return (
     <LazyMotion features={domAnimation} strict>
@@ -25,7 +25,11 @@ export function FooterDrawer({ children, className }) {
         <m.div
           ref={ref}
           className={className}
-          style={ready ? { y, scale, borderRadius, transformOrigin: "50% 100%" } : undefined}
+          style={
+            ready
+              ? { y, scale, borderTopLeftRadius: radius, borderTopRightRadius: radius, transformOrigin: "50% 100%" }
+              : undefined
+          }
         >
           {children}
         </m.div>

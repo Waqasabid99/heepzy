@@ -35,7 +35,7 @@ const cardSelect = {
   createdAt: true,
   images: { orderBy: { sortOrder: "asc" }, take: 6, select: { url: true, alt: true, color: true } },
   categories: { select: { name: true, slug: true }, take: 1 },
-  variants: { where: { isActive: true }, select: { colorHex: true, color: true, stock: true } },
+  variants: { where: { isActive: true }, select: { colorHex: true, color: true, size: true, stock: true } },
 };
 
 /** Shape a product row into the minimal, client-safe card model. */
@@ -57,6 +57,9 @@ function toCard(p) {
     images: p.images.map((i) => ({ url: i.url, alt: i.alt, color: i.color })),
     colours: colours.map(([name, hex]) => ({ name, hex })),
     soldOut: p.variants.every((v) => v.stock <= 0),
+    gender: p.gender,
+    // In-stock sizes, numerically sorted, for the size chips on cards.
+    sizes: [...new Set(p.variants.filter((v) => v.stock > 0).map((v) => v.size))].sort((a, b) => Number(a) - Number(b)),
   };
 }
 
@@ -69,7 +72,7 @@ export async function getHomeCatalog() {
     db.product.findMany({
       where: { status: "ACTIVE", deletedAt: null },
       orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-      take: 9,
+      take: 30,
       select: cardSelect,
     }),
     db.category.findMany({
@@ -84,10 +87,43 @@ export async function getHomeCatalog() {
     }),
   ]);
 
+  const products = featured.map(toCard);
+  const maxDiscount = Math.max(
+    0,
+    ...products.filter((p) => p.compareAt).map((p) => Math.round(((p.compareAt - p.price) / p.compareAt) * 100)),
+  );
   return {
-    products: featured.map(toCard),
+    products,
+    maxDiscount,
     categories: categories.map((c) => ({ name: c.name, slug: c.slug, imageUrl: c.imageUrl, count: c._count.products })),
   };
+}
+
+/** Recent approved 4–5 star reviews with text, for the home page (first name only). */
+export async function getHomeReviews(limit = 4) {
+  "use cache";
+  cacheTag(CATALOG_TAG, "reviews");
+  cacheLife("hours");
+
+  const rows = await db.review.findMany({
+    where: { status: "APPROVED", rating: { gte: 4 }, body: { not: null } },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      rating: true,
+      body: true,
+      user: { select: { name: true } },
+      product: { select: { name: true, slug: true } },
+    },
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    rating: r.rating,
+    body: r.body.length > 180 ? `${r.body.slice(0, 177)}…` : r.body,
+    author: r.user.name?.split(" ")[0] || "Verified customer",
+    product: r.product,
+  }));
 }
 
 /** Normalise untrusted searchParams into a small, safe filter object. */

@@ -1,8 +1,8 @@
-import { Manrope, Oswald } from "next/font/google";
+import { Manrope, Oswald, Yellowtail } from "next/font/google";
 import { ThemeScript } from "@/components/theme/theme-script";
 import "./globals.css";
 
-// Typefaces from the Heepzy design: Oswald (display, prices) + Manrope (UI/body).
+// Typefaces: Oswald (display, prices), Manrope (UI/body), Yellowtail (short handwritten accents).
 const body = Manrope({ variable: "--font-body", subsets: ["latin"], display: "swap" });
 const heading = Oswald({
   variable: "--font-heading",
@@ -10,6 +10,8 @@ const heading = Oswald({
   weight: ["400", "500", "600"],
   display: "swap",
 });
+
+const hand = Yellowtail({ variable: "--font-hand", subsets: ["latin"], weight: "400", display: "swap" });
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -24,14 +26,19 @@ export const metadata = {
 
 export const viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafaf7" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#0d0d0c" },
   ],
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en-PK" data-theme="light" className={`${body.variable} ${heading.variable}`} suppressHydrationWarning>
+    <html
+      lang="en-PK"
+      data-theme="light"
+      className={`${body.variable} ${heading.variable} ${hand.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <ThemeScript />
       </head>

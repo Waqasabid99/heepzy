@@ -5,6 +5,7 @@ import { getCart } from "@/lib/cart";
 import { getStoreSettings } from "@/lib/settings";
 import { formatPKR } from "@/lib/money";
 import { updateCartItem } from "@/actions/cart";
+import { ArrowLeft } from "@/components/ui/icons";
 
 export const metadata = { title: "Your cart", robots: { index: false } };
 
@@ -109,8 +110,8 @@ async function CartContents() {
             </li>
           ))}
         </ul>
-        <Link href="/products" className="mt-6 inline-block text-sm font-bold link-underline">
-          ← Continue shopping
+        <Link href="/products" className="mt-6 inline-flex items-center gap-2 text-sm font-bold link-underline">
+          <ArrowLeft className="size-4" /> Continue shopping
         </Link>
       </section>
 
