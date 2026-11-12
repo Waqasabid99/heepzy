@@ -1,0 +1,30 @@
+# Local development database only. Production uses Hostinger's managed MySQL.
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: heepzy-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: heepzy
+      MYSQL_USER: heepzy
+      MYSQL_PASSWORD: heepzy_local_pw
+      MYSQL_ROOT_PASSWORD: heepzy_root_pw
+      TZ: UTC
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+00:00
+    ports:
+      # Bound to localhost only; 3308 avoids clashing with other local MySQL servers.
+      - "127.0.0.1:3308:3306"
+    volumes:
+      - heepzy-mysql-data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pheepzy_root_pw"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  heepzy-mysql-data:

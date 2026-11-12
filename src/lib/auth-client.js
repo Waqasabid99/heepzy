@@ -1,0 +1,10 @@
+"use client";
+
+import { createAuthClient } from "better-auth/react";
+import { adminClient, inferAdditionalFields } from "better-auth/client/plugins";
+
+export const authClient = createAuthClient({
+  plugins: [adminClient(), inferAdditionalFields({ user: { phone: { type: "string", required: false } } })],
+});
+
+export const { signIn, signUp, signOut, useSession } = authClient;
