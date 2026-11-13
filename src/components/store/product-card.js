@@ -16,10 +16,8 @@ export function ProductCard({
   priority = false,
   className = "",
   sizes = "(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 92vw",
-  showSizes = true,
 }) {
   const { slug, name, subtitle, price, compareAt, badge, colours, images = [], soldOut } = product;
-  const stockSizes = product.sizes ?? [];
   const href = `/products/${slug}`;
 
   // Build the thumbnail set: [{ label, main, next }]
@@ -125,21 +123,6 @@ export function ProductCard({
           </span>
           {discount ? <span className="text-xs font-bold text-brand">Save {discount}%</span> : null}
         </p>
-        {showSizes && stockSizes.length > 0 && !soldOut ? (
-          <ul aria-label="Sizes in stock" className="mt-1.5 flex flex-wrap gap-1">
-            {stockSizes.slice(0, 7).map((s) => (
-              <li
-                key={s}
-                className="grid h-7 min-w-8 place-items-center border border-line px-1 text-[11px] text-fg-muted"
-              >
-                {s}
-              </li>
-            ))}
-            {stockSizes.length > 7 ? (
-              <li className="grid h-7 place-items-center px-1 text-[11px] text-fg-muted">+{stockSizes.length - 7}</li>
-            ) : null}
-          </ul>
-        ) : null}
       </div>
     </article>
   );

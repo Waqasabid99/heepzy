@@ -35,7 +35,7 @@ const cardSelect = {
   createdAt: true,
   images: { orderBy: { sortOrder: "asc" }, take: 6, select: { url: true, alt: true, color: true } },
   categories: { select: { name: true, slug: true }, take: 1 },
-  variants: { where: { isActive: true }, select: { colorHex: true, color: true, size: true, stock: true } },
+  variants: { where: { isActive: true }, select: { colorHex: true, color: true, stock: true } },
 };
 
 /** Shape a product row into the minimal, client-safe card model. */
@@ -58,8 +58,6 @@ function toCard(p) {
     colours: colours.map(([name, hex]) => ({ name, hex })),
     soldOut: p.variants.every((v) => v.stock <= 0),
     gender: p.gender,
-    // In-stock sizes, numerically sorted, for the size chips on cards.
-    sizes: [...new Set(p.variants.filter((v) => v.stock > 0).map((v) => v.size))].sort((a, b) => Number(a) - Number(b)),
   };
 }
 
