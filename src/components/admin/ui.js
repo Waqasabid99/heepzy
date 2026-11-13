@@ -79,3 +79,36 @@ export function Pagination({ page, pageCount, hrefFor }) {
     </nav>
   );
 }
+
+/** Simple tab links between related admin pages. `current` is the active tab's href. */
+export function AdminTabs({ tabs, current, label }) {
+  return (
+    <nav aria-label={label} className="mb-6 border-b border-line">
+      <ul className="flex gap-6">
+        {tabs.map((t) => (
+          <li key={t.href}>
+            <Link
+              href={t.href}
+              aria-current={t.href === current ? "page" : undefined}
+              className="-mb-px inline-flex min-h-11 items-center border-b-2 border-transparent text-sm font-bold text-fg-muted hover:text-fg aria-[current=page]:border-accent aria-[current=page]:text-fg"
+            >
+              {t.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+/** Small KPI tile. */
+export function StatCard({ label, value, hint, tone }) {
+  const toneCls = tone === "danger" ? "text-sale" : tone === "warning" ? "text-warning" : "text-fg";
+  return (
+    <div className="rounded-2xl border border-line bg-surface px-5 py-4">
+      <p className="text-xs font-bold tracking-[0.06em] text-fg-muted uppercase">{label}</p>
+      <p className={`mt-1 font-display text-3xl font-semibold ${toneCls}`}>{value}</p>
+      {hint ? <p className="mt-0.5 text-xs text-fg-muted">{hint}</p> : null}
+    </div>
+  );
+}

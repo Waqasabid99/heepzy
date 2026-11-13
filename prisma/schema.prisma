@@ -339,14 +339,15 @@ enum InventoryReason {
 
 /// Append-only stock ledger for auditability.
 model InventoryMovement {
-  id        String          @id @default(cuid())
-  variantId String
-  change    Int // + adds stock, - removes stock
-  reason    InventoryReason
-  note      String?         @db.VarChar(255)
-  orderId   String?
-  actorId   String?         @db.VarChar(64)
-  createdAt DateTime        @default(now())
+  id         String          @id @default(cuid())
+  variantId  String
+  change     Int // + adds stock, - removes stock
+  stockAfter Int? // variant stock right after this movement (null for rows recorded before it existed)
+  reason     InventoryReason
+  note       String?         @db.VarChar(255)
+  orderId    String?
+  actorId    String?         @db.VarChar(64)
+  createdAt  DateTime        @default(now())
 
   variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 

@@ -288,14 +288,27 @@ export async function saveProduct(_prev, formData) {
       if (v.id) {
         await tx.productVariant.update({ where: { id: v.id }, data: fields });
         const change = v.stock - own.get(v.id).stock;
-        if (change) movements.push({ variantId: v.id, change, reason: "ADJUSTMENT", note: "Edited in product form" });
+        if (change)
+          movements.push({
+            variantId: v.id,
+            change,
+            stockAfter: v.stock,
+            reason: "ADJUSTMENT",
+            note: "Edited in product form",
+          });
       } else {
         const created = await tx.productVariant.create({
           data: { ...fields, productId: product.id },
           select: { id: true },
         });
         if (v.stock > 0)
-          movements.push({ variantId: created.id, change: v.stock, reason: "RESTOCK", note: "Opening stock" });
+          movements.push({
+            variantId: created.id,
+            change: v.stock,
+            stockAfter: v.stock,
+            reason: "RESTOCK",
+            note: "Opening stock",
+          });
       }
     }
     if (movements.length) {
