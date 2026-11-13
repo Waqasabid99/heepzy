@@ -24,6 +24,8 @@ const schema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   MAIL_FROM: z.string().optional(),
+  // Where uploaded images are written (served by /media/*). Keep it outside the build output.
+  UPLOAD_DIR: z.string().default("storage/uploads"),
 });
 
 const parsed = schema.safeParse(process.env);

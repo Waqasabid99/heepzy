@@ -49,7 +49,7 @@ export default async function HomePage() {
           aria-hidden="true"
           className="absolute inset-0 -z-10 bg-linear-to-r from-panel/95 via-panel/70 to-panel/10 max-md:bg-panel/70"
         />
-        <div className="container-page flex min-h-[520px] flex-col justify-center py-14 lg:min-h-[600px]">
+        <div className="container-page flex min-h-130 flex-col justify-center py-14 lg:min-h-150">
           <p className="script text-[clamp(34px,4vw,50px)] text-saffron">{CAMPAIGN.kicker}</p>
           <h1 id="hero-title" className="mt-2 display text-[clamp(72px,11vw,156px)] leading-[0.88]">
             {CAMPAIGN.title} <span className="text-accent">{CAMPAIGN.highlight}</span>
@@ -192,7 +192,7 @@ export default async function HomePage() {
       <section aria-label="Collections" className="container-page grid gap-3 pt-16 sm:gap-4 lg:grid-cols-2 lg:pt-20">
         <Link
           href="/products?gender=men&category=formal"
-          className="group relative block min-h-[460px] overflow-hidden rounded-tile bg-panel text-on-panel lg:min-h-[580px]"
+          className="group relative block min-h-115 overflow-hidden rounded-tile bg-panel text-on-panel lg:min-h-145"
         >
           <Image
             src={desiDrip}
@@ -280,8 +280,8 @@ export default async function HomePage() {
 function CircleLink({ href, label, labelClass = "", children }) {
   return (
     <li className="shrink-0 snap-start">
-      <Link href={href} className="group flex w-[92px] flex-col items-center gap-2 text-center sm:w-[108px]">
-        <span className="block size-[88px] rounded-full bg-[conic-gradient(var(--hz-accent),var(--hz-saffron),var(--hz-emerald),var(--hz-accent))] p-[3px] sm:size-[104px]">
+      <Link href={href} className="group flex w-23 flex-col items-center gap-2 text-center sm:w-27">
+        <span className="block size-22 rounded-full bg-[conic-gradient(var(--hz-accent),var(--hz-saffron),var(--hz-emerald),var(--hz-accent))] p-0.75 sm:size-26">
           <span className="relative block size-full overflow-hidden rounded-full border-[3px] border-bg transition-transform duration-500 ease-out-soft group-hover:scale-[0.97]">
             {children}
           </span>
@@ -294,7 +294,7 @@ function CircleLink({ href, label, labelClass = "", children }) {
 
 function BlockLink({ href, kicker, title, sub, image, alt, tone, button }) {
   return (
-    <Link href={href} className={`group relative block h-[420px] overflow-hidden rounded-tile lg:h-[520px] ${tone}`}>
+    <Link href={href} className={`group relative block h-105 overflow-hidden rounded-tile lg:h-130 ${tone}`}>
       <span className="absolute right-0 bottom-0 h-[64%] w-[76%] overflow-hidden rounded-tl-[140px]">
         <Image
           src={image}
@@ -317,7 +317,7 @@ function BlockLink({ href, kicker, title, sub, image, alt, tone, button }) {
 
 function SplitTile({ href, kicker, title, image, alt, tone, button, Icon, cta }) {
   return (
-    <Link href={href} className={`group relative flex min-h-[250px] overflow-hidden rounded-tile ${tone}`}>
+    <Link href={href} className={`group relative flex min-h-62.5 overflow-hidden rounded-tile ${tone}`}>
       <span className="relative z-10 flex max-w-[60%] flex-col items-start justify-center gap-2 p-6 sm:max-w-[55%] sm:p-9">
         <span className="flex items-center gap-2">
           <Icon className="size-5" />
