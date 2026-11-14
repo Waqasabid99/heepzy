@@ -19,6 +19,12 @@ const schema = z.object({
   NEXT_PUBLIC_SAFEPAY_PUBLIC_KEY: z.string().optional(),
   SAFEPAY_SECRET_KEY: z.string().optional(),
   SAFEPAY_WEBHOOK_SHARED_SECRET_KEY: z.string().optional(),
+  // Encrypts payment keys saved in the admin (falls back to a key derived from
+  // BETTER_AUTH_SECRET). Changing it makes saved keys unreadable: re-enter them.
+  SECRETS_ENCRYPTION_KEY: z.preprocess(
+    (v) => v || undefined,
+    z.string().min(32, "SECRETS_ENCRYPTION_KEY must be at least 32 chars").optional(),
+  ),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().optional(),
   SMTP_USER: z.string().optional(),

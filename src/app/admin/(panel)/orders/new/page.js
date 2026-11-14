@@ -10,9 +10,10 @@ export const metadata = { title: "New order" };
 
 export default withAdmin(async function NewOrderPage({ searchParams }) {
   const sp = await searchParams;
-  const [customer, settings] = await Promise.all([
+  const [customer, settings, cardReady] = await Promise.all([
     typeof sp.customer === "string" ? getCustomerForOrder(sp.customer) : null,
     getStoreSettings(),
+    safepayConfigured(),
   ]);
   return (
     <AdminPage
@@ -23,7 +24,7 @@ export default withAdmin(async function NewOrderPage({ searchParams }) {
       <AdminOrderForm
         provinces={PROVINCES}
         initialCustomer={customer}
-        cardAvailable={Boolean(settings.cardPaymentsEnabled && safepayConfigured())}
+        cardAvailable={Boolean(settings.cardPaymentsEnabled && cardReady)}
       />
     </AdminPage>
   );

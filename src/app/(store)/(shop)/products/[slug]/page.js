@@ -218,6 +218,11 @@ async function ProductDetails({ params }) {
                   ? ` Unworn pairs can be exchanged or returned within ${settings.returnWindowDays} days.`
                   : ""}
               </p>
+              <p className="pb-4 text-sm text-fg-muted">
+                <span className="font-semibold text-fg">Tip:</span> record a short unboxing video when your parcel
+                arrives. If anything is damaged or wrong, share it with your return request and we&apos;ll sort it out
+                quickly.
+              </p>
             </details>
             <details className="group border-t border-b border-line">
               <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-sm font-bold">

@@ -115,7 +115,7 @@ export function OrderActions({ order, next }) {
               <input type="hidden" name="status" value="CANCELLED" />
               <p className="text-[13px] font-semibold text-sale">
                 Cancelling puts all items back in stock.
-                {order.paymentStatus === "PAID" ? " This order is paid: refund it in the Safepay dashboard." : ""}
+                {order.paymentStatus === "PAID" ? " This order is paid: refund the customer, then record the refund on this page." : ""}
               </p>
               <div>
                 <label htmlFor="oa-reason" className="mb-1 block text-[13px] font-bold">

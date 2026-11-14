@@ -156,6 +156,24 @@ model StoreSettings {
   @@map("store_settings")
 }
 
+/// Payment gateway keys entered by the owner in Admin → Settings → Payments.
+/// Secrets are AES-256-GCM encrypted (src/lib/secret-box.js) and never sent
+/// back to the browser; only the last 4 characters are kept in clear as hints.
+/// Keys set in the server environment take priority over this row.
+model PaymentGateway {
+  provider         String   @id @db.VarChar(20) // "SAFEPAY"
+  environment      String   @default("sandbox") @db.VarChar(12)
+  publicKey        String   @db.VarChar(200)
+  secretKeyEnc     String   @db.Text
+  webhookSecretEnc String?  @db.Text
+  secretHint       String   @db.VarChar(8)
+  webhookHint      String?  @db.VarChar(8)
+  updatedById      String?  @db.VarChar(64)
+  updatedAt        DateTime @updatedAt
+
+  @@map("payment_gateways")
+}
+
 // ═════════════════════════════════════════════════════════════
 // Catalogue
 // ═════════════════════════════════════════════════════════════

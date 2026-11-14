@@ -275,3 +275,10 @@ export const AlertCircle = (p) => (
     <path d="M12 7.5v5M12 16v.01" />
   </Svg>
 );
+
+export const Video = (p) => (
+  <Svg {...p}>
+    <rect x="3" y="6" width="13" height="12" rx="2" />
+    <path d="m16 10 5-3v10l-5-3" />
+  </Svg>
+);

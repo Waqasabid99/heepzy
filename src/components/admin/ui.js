@@ -84,7 +84,7 @@ export function Pagination({ page, pageCount, hrefFor }) {
 export function AdminTabs({ tabs, current, label }) {
   return (
     <nav aria-label={label} className="mb-6 border-b border-line">
-      <ul className="flex gap-6">
+      <ul className="flex flex-wrap gap-x-6">
         {tabs.map((t) => (
           <li key={t.href}>
             <Link

@@ -5,7 +5,7 @@ import { getStoreSettings } from "@/lib/settings";
 import { getCurrentUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { PROVINCES } from "@/lib/checkout";
-import { safepayConfigured } from "@/lib/payments/safepay";
+import { getSafepayStatus } from "@/lib/payments/safepay";
 import { CheckoutForm } from "@/components/store/checkout-form";
 
 export const metadata = { title: "Checkout", robots: { index: false } };
@@ -48,6 +48,7 @@ async function Checkout() {
     );
   }
 
+  const safepay = await getSafepayStatus();
   const address = user
     ? await db.address.findFirst({
         where: { userId: user.id },
@@ -71,8 +72,8 @@ async function Checkout() {
       provinces={PROVINCES}
       payment={{
         cod: settings.codEnabled,
-        card: settings.cardPaymentsEnabled && safepayConfigured(),
-        sandbox: process.env.SAFEPAY_ENVIRONMENT !== "production",
+        card: settings.cardPaymentsEnabled && safepay.configured,
+        sandbox: safepay.environment !== "production",
       }}
       initial={{
         email: user?.email ?? "",

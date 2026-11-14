@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { withAdmin } from "@/components/admin/with-admin";
 import { AdminPage, Notice } from "@/components/admin/ui";
 import { CustomerLink } from "@/components/admin/customer-link";
+import { OrderRefund } from "@/components/admin/return-actions";
+import { ReturnStatusBadge } from "@/components/admin/return-badge";
+import { REFUND_METHOD_LABELS, RESOLUTION_LABELS, refundable } from "@/lib/returns";
 import { OrderStatusBadge, PaymentBadge } from "@/components/admin/order-badges";
 import { OrderActions } from "@/components/admin/order-actions";
 import { getAdminOrder, NEXT_STATUSES } from "@/lib/admin/orders";
@@ -202,6 +205,42 @@ export default withAdmin(async function OrderPage({ params, searchParams }) {
             </ul>
           </section>
 
+          {order.refunds.length || order.returnRequests.length ? (
+            <section aria-labelledby="ref-title" className="rounded-2xl border border-line bg-surface p-5 text-sm">
+              <h2 id="ref-title" className="mb-3 font-extrabold">
+                Returns and refunds
+              </h2>
+              <ul className="grid gap-2">
+                {order.returnRequests.map((r) => (
+                  <li
+                    key={r.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted px-3 py-2"
+                  >
+                    <Link href={`/admin/returns/${r.id}`} className="font-semibold hover:underline">
+                      {r.rmaNumber} · {RESOLUTION_LABELS[r.resolution]}
+                    </Link>
+                    <ReturnStatusBadge status={r.status} />
+                  </li>
+                ))}
+                {order.refunds.map((f) => (
+                  <li
+                    key={f.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted px-3 py-2"
+                  >
+                    <span>
+                      Refund · {REFUND_METHOD_LABELS[f.method]}
+                      {f.reason ? <span className="block text-xs text-fg-muted">{f.reason}</span> : null}
+                    </span>
+                    <span className="font-bold">− {formatPKR(f.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+              {Number(order.refundedTotal) ? (
+                <p className="mt-3 font-semibold">Refunded in total: {formatPKR(order.refundedTotal)}</p>
+              ) : null}
+            </section>
+          ) : null}
+
           <section aria-labelledby="hist-title" className="rounded-2xl border border-line bg-surface p-5 text-sm">
             <h2 id="hist-title" className="mb-3 font-extrabold">
               Timeline
@@ -231,6 +270,13 @@ export default withAdmin(async function OrderPage({ params, searchParams }) {
               needsPayment={
                 order.paymentMethod === "CARD" && order.paymentStatus !== "PAID" && order.status === "PENDING"
               }
+            />
+          ) : null}
+          {["PAID", "PARTIALLY_REFUNDED"].includes(order.paymentStatus) ? (
+            <OrderRefund
+              orderId={order.id}
+              max={refundable(order)}
+              defaultMethod={order.paymentMethod === "CARD" ? "ORIGINAL_PAYMENT" : "BANK_TRANSFER"}
             />
           ) : null}
           <OrderActions

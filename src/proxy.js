@@ -71,6 +71,7 @@ export function proxy(request) {
 export const config = {
   // Skip static assets and image optimisation.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff2?)$).*)",
+    // api/returns/media is excluded so large uploads stream instead of being buffered (it rate-limits itself).
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/returns/media|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff2?)$).*)",
   ],
 };

@@ -165,7 +165,7 @@ export async function createAdminOrder(input) {
   const email = (f.email || customer?.email || "").toLowerCase();
   const city = canonicalCity(f.province, f.city) ?? f.city.replace(/\s+/g, " ");
 
-  if (f.payment === "CARD_LINK" && !safepayConfigured()) {
+  if (f.payment === "CARD_LINK" && !(await safepayConfigured())) {
     return fail({ payment: "Card payments aren't set up. Choose another payment option." });
   }
 

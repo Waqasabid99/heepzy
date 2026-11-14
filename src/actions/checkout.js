@@ -13,6 +13,7 @@ import { LIMITS, rateLimit } from "@/lib/rate-limit";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { canonicalCity } from "@/lib/pk-cities";
 import { normalizePhone } from "@/lib/phone";
+import { isStaff } from "@/lib/roles";
 import { newAccessToken, nextOrderNumber, PROVINCES, quote } from "@/lib/checkout";
 import { createCheckout, safepayConfigured } from "@/lib/payments/safepay";
 import { createOrder, getOrderForViewer } from "@/lib/orders";
@@ -25,7 +26,7 @@ async function availableLines() {
 }
 
 async function paymentOptions(settings) {
-  return { card: settings.cardPaymentsEnabled && safepayConfigured(), cod: settings.codEnabled };
+  return { card: settings.cardPaymentsEnabled && (await safepayConfigured()), cod: settings.codEnabled };
 }
 
 /**
@@ -123,6 +124,9 @@ export async function placeOrder(_prev, formData) {
   f.city = canonicalCity(f.province, f.city) ?? f.city.replace(/\s+/g, " ");
 
   const [{ cart, lines }, settings, user] = await Promise.all([availableLines(), getStoreSettings(), getCurrentUser()]);
+  if (settings.maintenanceMode && !isStaff(user?.role)) {
+    return fail({}, "The store is closed for maintenance. Please try again soon.");
+  }
   if (!user && !settings.guestCheckoutEnabled) return fail({}, "Please sign in to place an order.");
   if (!lines.length) return fail({}, "Your bag is empty.");
   const problems = cart.lines.filter((l) => !l.available || l.quantity > l.stock);
@@ -224,7 +228,7 @@ export async function retryPayment(orderNumber, token) {
   if (!order || order.paymentMethod !== "CARD" || order.paymentStatus === "PAID" || order.status !== "PENDING") {
     return { ok: false, message: "This order can't be paid online." };
   }
-  if (!safepayConfigured()) return { ok: false, message: "Card payments are not available right now." };
+  if (!(await safepayConfigured())) return { ok: false, message: "Card payments are not available right now." };
 
   let checkout;
   try {

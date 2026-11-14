@@ -61,7 +61,7 @@ export async function updateOrderStatus(_prev, formData) {
       ok: true,
       message:
         order.paymentStatus === "PAID"
-          ? "Order cancelled and stock restored. It was paid online, so issue a refund from the Safepay dashboard."
+          ? "Order cancelled and stock restored. It was paid, so refund the customer (in the Safepay dashboard for card payments), then use Record a refund on this page."
           : "Order cancelled and stock restored.",
     };
   }

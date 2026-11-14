@@ -6,7 +6,16 @@ import { getOrderForViewer, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_
 import { PROVINCES } from "@/lib/checkout";
 import { formatPKR } from "@/lib/money";
 import { RetryPayment } from "@/components/store/retry-payment";
-import { AlertCircle, Check, Clock } from "@/components/ui/icons";
+import { AlertCircle, Check, Clock, Exchange, Truck, Video } from "@/components/ui/icons";
+import { getStoreSettings } from "@/lib/settings";
+import {
+  openReturnQuantities,
+  RESOLUTION_LABELS,
+  RETURN_STATUS_LABELS,
+  returnEligibility,
+  returnsForOrder,
+} from "@/lib/returns";
+import { CancelReturnButton } from "@/components/store/cancel-return-button";
 
 export const metadata = { title: "Your order", robots: { index: false } };
 
@@ -26,6 +35,13 @@ async function OrderView({ params, searchParams }) {
   const order = await getOrderForViewer(orderNumber, token);
   if (!order) notFound();
 
+  const [settings, openQty, returns] = await Promise.all([
+    getStoreSettings(),
+    openReturnQuantities(order.id),
+    returnsForOrder(order.id),
+  ]);
+  const returnCheck = returnEligibility(order, settings, openQty);
+  const returnHref = `/returns/new?order=${order.orderNumber}${token ? `&t=${encodeURIComponent(token)}` : ""}`;
   const isCard = order.paymentMethod === "CARD";
   const paid = order.paymentStatus === "PAID";
   const cancelled = order.status === "CANCELLED";
@@ -60,6 +76,22 @@ async function OrderView({ params, searchParams }) {
     title = "We're confirming your payment";
     text =
       "Safepay is still processing your payment. This usually takes a moment. Refresh this page, or try again if the payment didn't go through.";
+  } else if (order.status === "DELIVERED" || order.status === "RETURNED") {
+    Icon = Check;
+    title = order.status === "RETURNED" ? "Returned" : "Delivered";
+    text =
+      order.status === "RETURNED"
+        ? "This order has been returned."
+        : returnCheck.eligible
+          ? "We hope you love your new shoes. Wrong size? You can request an exchange below."
+          : "We hope you love your new shoes.";
+  } else if (order.status === "SHIPPED") {
+    tone = "info";
+    Icon = Truck;
+    title = "On its way";
+    text = order.courier
+      ? `Sent with ${order.courier}${order.trackingNumber ? ` (tracking ${order.trackingNumber})` : ""}. ${order.paymentMethod === "COD" && !paid ? "Keep the cash ready for the rider." : ""}`
+      : "Your order has left our store.";
   } else if (cancelled) {
     tone = "warning";
     Icon = AlertCircle;
@@ -93,8 +125,66 @@ async function OrderView({ params, searchParams }) {
               />
             </div>
           ) : null}
+          {returnCheck.eligible ? (
+            <Link href={returnHref} className="btn-outline mt-5">
+              <Exchange className="size-4" /> Return or exchange
+            </Link>
+          ) : null}
         </div>
       </div>
+
+      {settings.returnsEnabled && ["CONFIRMED", "PROCESSING", "SHIPPED"].includes(order.status) ? (
+        <p className="mt-6 flex items-start gap-3 rounded-xl border border-line bg-surface p-4 text-sm">
+          <Video className="mt-0.5 size-5 shrink-0 text-brand" />
+          <span>
+            <span className="font-bold">Record an unboxing video</span> when your parcel arrives. If a shoe is damaged
+            or not what you ordered, you can add the video and photos to a return request.
+          </span>
+        </p>
+      ) : null}
+
+      {sp.return ? (
+        <p
+          role="status"
+          className="mt-6 flex items-center gap-2 rounded-xl bg-success-bg p-4 text-sm font-semibold text-success"
+        >
+          <Check className="size-4 shrink-0" /> Return request {String(sp.return).slice(0, 20)} sent. We&apos;ll contact
+          you to arrange the pickup.
+        </p>
+      ) : null}
+
+      {returns.length ? (
+        <section
+          id="returns"
+          aria-labelledby="returns-title"
+          className="mt-6 rounded-2xl border border-line bg-surface p-5 sm:p-6"
+        >
+          <h2 id="returns-title" className="mb-3 text-lg font-extrabold">
+            Returns
+          </h2>
+          <ul className="grid gap-3 text-sm">
+            {returns.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-start justify-between gap-3 rounded-xl bg-muted p-4">
+                <span>
+                  <span className="font-bold">{r.rmaNumber}</span> · {RESOLUTION_LABELS[r.resolution]}
+                  <span className="block text-fg-muted">
+                    {r.items.map((i) => `${i.orderItem.productName} (${i.orderItem.size}) × ${i.quantity}`).join(", ")}
+                  </span>
+                  {r.refunded ? <span className="block">Refunded {formatPKR(r.refunded)}</span> : null}
+                </span>
+                <span className="flex items-center gap-3">
+                  <span className="rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold">
+                    {RETURN_STATUS_LABELS[r.status]}
+                  </span>
+                  {r.status === "REQUESTED" ? (
+                    <CancelReturnButton orderNumber={order.orderNumber} token={token} returnId={r.id} />
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <div className="mt-8 grid gap-6 md:grid-cols-[minmax(0,1fr)_300px]">
         <section aria-labelledby="items-title" className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
@@ -162,7 +252,8 @@ async function OrderView({ params, searchParams }) {
             </p>
           </div>
           <p className="text-fg-muted">
-            Keep this page&apos;s link to check your order later. A confirmation is sent to {order.email}.
+            Keep this page&apos;s link to check your order later.
+            {order.email ? ` A confirmation is sent to ${order.email}.` : ""}
           </p>
           <Link href="/products" className="btn-outline">
             Continue shopping

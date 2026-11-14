@@ -33,7 +33,7 @@ export async function POST(request) {
   await connection();
   const raw = await request.text();
   if (raw.length > MAX_BODY_BYTES) return new Response("Payload too large", { status: 413 });
-  if (!verifyWebhookSignature(raw, request.headers.get("x-sfpy-signature"))) {
+  if (!(await verifyWebhookSignature(raw, request.headers.get("x-sfpy-signature")))) {
     return new Response("Invalid signature", { status: 401 });
   }
 

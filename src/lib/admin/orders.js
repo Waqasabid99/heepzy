@@ -109,6 +109,11 @@ export async function getAdminOrder(id) {
       payments: { orderBy: { createdAt: "desc" } },
       statusHistory: { orderBy: { createdAt: "asc" } },
       user: { select: { id: true, name: true, email: true } },
+      refunds: { orderBy: { createdAt: "desc" } },
+      returnRequests: {
+        orderBy: { createdAt: "desc" },
+        select: { id: true, rmaNumber: true, status: true, resolution: true, createdAt: true },
+      },
     },
   });
   if (!order) return null;
