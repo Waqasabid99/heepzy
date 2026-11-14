@@ -17,6 +17,9 @@ function createClient() {
     password: decodeURIComponent(url.password),
     database: url.pathname.slice(1),
     connectionLimit: env.DATABASE_POOL_SIZE,
+    // The driver defaults (1 s to connect) are too tight for a remote database over TLS.
+    connectTimeout: 20_000,
+    acquireTimeout: 30_000,
     allowPublicKeyRetrieval: url.searchParams.get("allowPublicKeyRetrieval") === "true",
     // Hosted databases (TiDB Cloud, PlanetScale…) require TLS; local Docker doesn't.
     ...(wantsTls(url) ? { ssl: { rejectUnauthorized: true } } : {}),
