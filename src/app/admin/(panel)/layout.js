@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { AdminNav, AdminNavFallback } from "@/components/admin/admin-nav";
 import { AdminMobileMenu } from "@/components/admin/admin-mobile-menu";
+import { AccountMenu } from "@/components/layout/account-menu";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ExternalLink } from "@/components/ui/icons";
 import { getCurrentUser } from "@/lib/session";
@@ -56,9 +57,6 @@ export default function AdminPanelLayout({ children }) {
           <Link href="/admin" className="mr-auto md:hidden" aria-label="Admin dashboard">
             <Logo />
           </Link>
-          <Suspense fallback={null}>
-            <SignedInAs />
-          </Suspense>
           <Link href="/" target="_blank" className="btn-ghost px-3 text-sm sm:px-4">
             <span className="hidden sm:inline">View store</span> <ExternalLink className="size-4" />
             <span className="sr-only">
@@ -66,6 +64,9 @@ export default function AdminPanelLayout({ children }) {
             </span>
           </Link>
           <ThemeToggle className="border border-line" />
+          <Suspense fallback={<span aria-hidden="true" className="size-11" />}>
+            <AdminAccount />
+          </Suspense>
         </header>
         <main id="main" tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
           {children}
@@ -82,12 +83,9 @@ async function StaffNav({ rail = false }) {
   return <AdminNav role={user?.role ?? null} rail={rail} badges={{ "/admin/messages": waiting }} />;
 }
 
-async function SignedInAs() {
+/** The same name/initial menu as the storefront header: pages, account and sign out. */
+async function AdminAccount() {
   const user = await getCurrentUser();
   if (!user || !isStaff(user.role)) return null;
-  return (
-    <p className="mr-auto hidden text-[13px] text-fg-muted md:block">
-      <span className="font-semibold text-fg">{user.name}</span> · {ROLE_LABELS[user.role]}
-    </p>
-  );
+  return <AccountMenu name={user.name} staff roleLabel={ROLE_LABELS[user.role]} />;
 }

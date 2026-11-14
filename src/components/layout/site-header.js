@@ -58,7 +58,7 @@ async function AccountControl() {
 /** Flat white store header (Option E1): logo, uppercase nav, search, account, theme, bag. */
 export function SiteHeader() {
   const linkCls =
-    "inline-flex min-h-11 items-center border-b-2 border-transparent text-[13px] font-extrabold tracking-[0.08em] uppercase transition-colors hover:border-fg aria-[current=page]:border-accent";
+    "inline-flex min-h-11 items-center whitespace-nowrap border-b-2 border-transparent text-[13px] font-extrabold tracking-[0.08em] uppercase transition-colors hover:border-fg aria-[current=page]:border-accent";
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur supports-backdrop-filter:bg-surface/85">

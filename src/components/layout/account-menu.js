@@ -11,7 +11,7 @@ const item =
   "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-semibold data-focus:bg-muted data-disabled:opacity-50";
 
 /** Signed-in header control: initial in a circle, opens a menu with account links. */
-export function AccountMenu({ name, staff }) {
+export function AccountMenu({ name, staff, roleLabel }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const first = (name || "").trim().split(/\s+/)[0] || "Account";
@@ -42,6 +42,7 @@ export function AccountMenu({ name, staff }) {
         <div className="px-3 pt-2 pb-2.5">
           <p className="text-xs text-fg-muted">Signed in as</p>
           <p className="truncate text-sm font-bold">{name || first}</p>
+          {roleLabel ? <p className="text-xs text-fg-muted">{roleLabel}</p> : null}
         </div>
         <MenuSeparator className="my-1 h-px bg-line" />
         {staff ? (
