@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "@/components/ui/password-input";
 import { startTransition, useActionState, useId, useState } from "react";
 import { createCustomer } from "@/actions/admin/customers";
 import { ErrorSummary } from "@/components/admin/error-summary";
@@ -109,10 +110,9 @@ export function CustomerForm({ provinces, canCreateStaff = false }) {
             <label htmlFor={id("password")} className={label}>
               Password <span className="font-normal text-fg-muted">· optional</span>
             </label>
-            <input
+            <PasswordInput
               id={id("password")}
               name="password"
-              type="password"
               autoComplete="new-password"
               maxLength={128}
               className={field}

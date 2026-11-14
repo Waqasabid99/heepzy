@@ -34,32 +34,42 @@ export const ADMIN_NAV = [
 ];
 
 const linkCls =
-  "flex min-h-11 whitespace-nowrap items-center gap-3 rounded-xl px-3.5 font-semibold text-on-panel-muted transition-colors hover:bg-on-panel/10 hover:text-on-panel aria-[current=page]:bg-on-panel aria-[current=page]:text-panel";
+  "flex min-h-11 items-center gap-3 rounded-xl px-3.5 font-semibold whitespace-nowrap text-on-panel-muted transition-colors hover:bg-on-panel/10 hover:text-on-panel aria-[current=page]:bg-on-panel aria-[current=page]:text-panel";
+// Icon rail between md and lg: icons only, label kept for screen readers and as a tooltip.
+const railCls = "md:justify-center md:px-0 lg:justify-start lg:px-3.5";
 
 /**
- * Sidebar navigation; highlights the current section and hides owner-only
+ * Admin navigation; highlights the current section and hides owner-only
  * pages from managers. Render inside <Suspense> (reads the pathname).
+ * `rail` = the sidebar (icons only between md and lg); otherwise the mobile menu list.
  */
-export function AdminNav({ role }) {
+export function AdminNav({ role, rail = false }) {
   const pathname = usePathname();
-  return <NavList role={role} isActive={(i) => (i.exact ? pathname === i.href : pathname.startsWith(i.href))} />;
+  return (
+    <NavList role={role} rail={rail} isActive={(i) => (i.exact ? pathname === i.href : pathname.startsWith(i.href))} />
+  );
 }
 
 /** Static fallback (no active state, no owner-only items) for the Suspense boundary. */
-export function AdminNavFallback() {
-  return <NavList role={null} isActive={() => false} />;
+export function AdminNavFallback({ rail = false }) {
+  return <NavList role={null} rail={rail} isActive={() => false} />;
 }
 
-function NavList({ role, isActive }) {
+function NavList({ role, rail, isActive }) {
   const items = ADMIN_NAV.filter((i) => isOwner(role) || !OWNER_ONLY_PATHS.includes(i.href));
   return (
     <nav aria-label="Admin">
-      <ul className="scroll-row gap-1 text-sm lg:grid lg:gap-0.5 lg:overflow-visible">
+      <ul className="grid gap-0.5 text-sm">
         {items.map((item) => (
-          <li key={item.href} className="shrink-0">
-            <Link href={item.href} aria-current={isActive(item) ? "page" : undefined} className={linkCls}>
+          <li key={item.href}>
+            <Link
+              href={item.href}
+              title={rail ? item.label : undefined}
+              aria-current={isActive(item) ? "page" : undefined}
+              className={`${linkCls} ${rail ? railCls : ""}`}
+            >
               <item.Icon className="size-[18px] shrink-0" />
-              {item.label}
+              <span className={rail ? "md:sr-only lg:not-sr-only" : ""}>{item.label}</span>
             </Link>
           </li>
         ))}

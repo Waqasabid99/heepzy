@@ -39,7 +39,7 @@ export default withAdmin(async function ReturnPage({ params }) {
       back={{ href: "/admin/returns", label: "Returns" }}
       actions={<ReturnStatusBadge status={r.status} />}
     >
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="grid content-start gap-5">
           <section aria-labelledby="ri-h" className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
             <h2 id="ri-h" className="mb-4 font-extrabold">

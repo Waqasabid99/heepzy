@@ -133,6 +133,7 @@ export function ScopePicker({ idPrefix, options, initial, error, noun = "This vo
                 />
               </div>
               <ComboboxOptions
+                modal={false}
                 anchor="bottom start"
                 className="z-50 max-h-72 w-(--input-width) overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-lg [--anchor-gap:6px] empty:invisible"
               >

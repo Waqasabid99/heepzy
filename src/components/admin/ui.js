@@ -105,9 +105,9 @@ export function AdminTabs({ tabs, current, label }) {
 export function StatCard({ label, value, hint, tone }) {
   const toneCls = tone === "danger" ? "text-sale" : tone === "warning" ? "text-warning" : "text-fg";
   return (
-    <div className="rounded-2xl border border-line bg-surface px-5 py-4">
+    <div className="min-w-0 rounded-2xl border border-line bg-surface px-4 py-4 sm:px-5">
       <p className="text-xs font-bold tracking-[0.06em] text-fg-muted uppercase">{label}</p>
-      <p className={`mt-1 font-display text-3xl font-semibold ${toneCls}`}>{value}</p>
+      <p className={`mt-1 font-display text-xl font-semibold break-words sm:text-3xl ${toneCls}`}>{value}</p>
       {hint ? <p className="mt-0.5 text-xs text-fg-muted">{hint}</p> : null}
     </div>
   );

@@ -3,7 +3,7 @@ import { getStoreSettings } from "@/lib/settings";
 import { formatPKR } from "@/lib/money";
 import { ArrowRight, Banknote, CreditCard, Exchange, Truck } from "@/components/ui/icons";
 
-/** Store perks shown in the strip under the promo bar (and reused on the home page). */
+/** Store perks (free delivery, COD, exchange, cards) for the home page "Pay your way" block. */
 export function getPerks(s) {
   return [
     s.freeDeliveryEnabled && s.freeDeliveryThreshold
@@ -18,15 +18,14 @@ export function getPerks(s) {
 }
 
 /**
- * Crimson promo bar (text + link from Store settings: announcementText /
- * announcementLink) over a black strip of store perks with icons.
+ * Crimson promo bar (text + link from Admin → Settings: announcementText /
+ * announcementLink). Hidden when the text is empty.
  */
 export async function AnnouncementBar() {
   const s = await getStoreSettings();
   const text = s.announcementText?.trim();
   // Only same-site paths are allowed as links from settings.
   const href = s.announcementLink?.startsWith("/") && !s.announcementLink.startsWith("//") ? s.announcementLink : null;
-  const perks = getPerks(s);
 
   return (
     <div>
@@ -44,19 +43,6 @@ export async function AnnouncementBar() {
             <p className="container-page flex min-h-10 items-center justify-center py-2 text-center">{text}</p>
           )}
         </div>
-      ) : null}
-      {perks.length ? (
-        <ul
-          aria-label="Store benefits"
-          className="scroll-row justify-start gap-8 bg-panel px-5 py-2 text-xs font-semibold text-on-panel sm:justify-center sm:gap-10"
-        >
-          {perks.map(({ Icon, title }) => (
-            <li key={title} className="flex shrink-0 snap-start items-center gap-2 whitespace-nowrap">
-              <Icon className="size-4 text-on-panel-muted" />
-              {title}
-            </li>
-          ))}
-        </ul>
       ) : null}
     </div>
   );

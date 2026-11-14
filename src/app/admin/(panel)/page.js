@@ -29,9 +29,9 @@ function Change({ value, range }) {
 
 function Kpi({ label, value, change, range }) {
   return (
-    <div className="rounded-2xl border border-line bg-surface px-4 py-4 sm:px-5">
+    <div className="min-w-0 rounded-2xl border border-line bg-surface px-4 py-4 sm:px-5">
       <p className="text-xs font-bold tracking-[0.06em] text-fg-muted uppercase">{label}</p>
-      <p className="mt-1 font-display text-2xl font-semibold tabular-nums sm:text-3xl">{value}</p>
+      <p className="mt-1 font-display text-xl font-semibold break-words tabular-nums sm:text-3xl">{value}</p>
       <Change value={change} range={range} />
     </div>
   );
@@ -106,9 +106,9 @@ export default withAdmin(async function DashboardPage({ admin, searchParams }) {
           change={d.kpis.average.change}
           range={range}
         />
-        <div className="rounded-2xl border border-line bg-surface px-4 py-4 sm:px-5">
+        <div className="min-w-0 rounded-2xl border border-line bg-surface px-4 py-4 sm:px-5">
           <p className="text-xs font-bold tracking-[0.06em] text-fg-muted uppercase">Cash on delivery</p>
-          <p className="mt-1 font-display text-2xl font-semibold tabular-nums sm:text-3xl">
+          <p className="mt-1 font-display text-xl font-semibold break-words tabular-nums sm:text-3xl">
             {d.kpis.codShare == null ? "–" : `${Math.round(d.kpis.codShare * 100)}%`}
           </p>
           <p className="mt-1 text-xs text-fg-muted">of orders in this period</p>
@@ -118,7 +118,7 @@ export default withAdmin(async function DashboardPage({ admin, searchParams }) {
         Sales are after refunds and leave out cancelled orders and card payments that didn&apos;t go through.
       </p>
 
-      <div className="mt-6 grid items-start gap-5 lg:grid-cols-[1fr_340px]">
+      <div className="mt-6 grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
         <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6" aria-labelledby="chart-h">
           <h2 id="chart-h" className="mb-5 font-extrabold">
             Sales per day
@@ -153,7 +153,7 @@ export default withAdmin(async function DashboardPage({ admin, searchParams }) {
         </section>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_340px]">
+      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
         <section className="rounded-2xl border border-line bg-surface" aria-labelledby="recent-h">
           <div className="flex items-center justify-between gap-3 px-5 pt-5 sm:px-6">
             <h2 id="recent-h" className="font-extrabold">
@@ -164,7 +164,7 @@ export default withAdmin(async function DashboardPage({ admin, searchParams }) {
             </Link>
           </div>
           {d.recent.length ? (
-            <div className="mt-3 overflow-x-auto">
+            <div className="relative mt-3 overflow-x-auto">
               <table className="w-full min-w-[560px] text-left text-sm">
                 <thead className="border-b border-line text-xs font-bold tracking-[0.06em] text-fg-muted uppercase">
                   <tr>

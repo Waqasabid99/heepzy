@@ -57,7 +57,7 @@ export default withAdmin(async function OrderPage({ params, searchParams }) {
           {order.paymentMethod === "CARD" ? " Send the customer the payment link below." : ""}
         </Notice>
       ) : null}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid content-start gap-5">
           <section aria-labelledby="items-title" className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
             <h2 id="items-title" className="mb-4 font-extrabold">

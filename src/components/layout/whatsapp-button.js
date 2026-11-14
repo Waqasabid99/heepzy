@@ -17,6 +17,7 @@ export async function WhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp (opens in a new tab)"
+      data-fab
       className="fixed right-4 bottom-4 z-40 grid size-14 place-items-center rounded-full bg-whatsapp text-white shadow-[0_10px_30px_rgb(0_0_0/0.25)] transition-transform hover:scale-105 sm:right-6 sm:bottom-6"
     >
       <WhatsApp className="size-7" />

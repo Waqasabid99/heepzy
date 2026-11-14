@@ -34,7 +34,7 @@ export default async function SizeGuidePage() {
 
       <div className="mt-14 grid gap-8 lg:grid-cols-2">
         {charts.map((c) => (
-          <section key={c.id} aria-labelledby={`chart-${c.id}`} className="overflow-x-auto card p-2">
+          <section key={c.id} aria-labelledby={`chart-${c.id}`} className="relative overflow-x-auto card p-2">
             <table className="w-full border-collapse text-center text-sm">
               <caption id={`chart-${c.id}`} className="px-4 pt-4 pb-2 text-left">
                 <span className="block heading text-2xl">{c.name}</span>

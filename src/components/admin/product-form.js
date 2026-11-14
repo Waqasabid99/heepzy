@@ -228,7 +228,7 @@ export function ProductForm({ product, options, social }) {
         const fd = new FormData(e.currentTarget);
         startTransition(() => action(fd));
       }}
-      className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]"
+      className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"
       noValidate
     >
       <input type="hidden" name="id" value={product?.id ?? ""} />
@@ -581,15 +581,12 @@ export function ProductForm({ product, options, social }) {
                       <Trash className="size-4" />
                     </IconBtn>
                   </div>
-                  <div className="overflow-x-auto">
+                  <div className="relative overflow-x-auto">
                     <table className="w-full min-w-[560px] text-sm">
                       <thead className="text-left text-xs text-fg-muted">
                         <tr>
                           <th scope="col" className="px-3 py-2 font-semibold">
                             Size
-                          </th>
-                          <th scope="col" className="px-3 py-2 font-semibold">
-                            SKU
                           </th>
                           <th scope="col" className="px-3 py-2 font-semibold">
                             Stock
@@ -599,6 +596,9 @@ export function ProductForm({ product, options, social }) {
                           </th>
                           <th scope="col" className="px-3 py-2 font-semibold">
                             On sale
+                          </th>
+                          <th scope="col" className="px-3 py-2 font-semibold">
+                            SKU
                           </th>
                           <th scope="col" className="px-3 py-2">
                             <span className="sr-only">Remove</span>
@@ -611,15 +611,6 @@ export function ProductForm({ product, options, social }) {
                             <th scope="row" className="px-3 py-1.5 text-left font-bold">
                               {v.size}
                             </th>
-                            <td className="px-3 py-1.5">
-                              <input
-                                aria-label={`SKU for ${colour} size ${v.size}`}
-                                value={v.sku}
-                                onChange={(e) => patchVariant(v, { sku: e.target.value })}
-                                maxLength={64}
-                                className="min-h-9 w-44 rounded-lg border border-field bg-surface px-2.5 font-mono text-xs"
-                              />
-                            </td>
                             <td className="px-3 py-1.5">
                               <input
                                 aria-label={`Stock for ${colour} size ${v.size}`}
@@ -652,6 +643,15 @@ export function ProductForm({ product, options, social }) {
                                 checked={v.isActive}
                                 onChange={(e) => patchVariant(v, { isActive: e.target.checked })}
                                 className="size-5 accent-fg"
+                              />
+                            </td>
+                            <td className="px-3 py-1.5">
+                              <input
+                                aria-label={`SKU for ${colour} size ${v.size}`}
+                                value={v.sku}
+                                onChange={(e) => patchVariant(v, { sku: e.target.value })}
+                                maxLength={64}
+                                className="min-h-9 w-44 rounded-lg border border-field bg-surface px-2.5 font-mono text-xs"
                               />
                             </td>
                             <td className="px-3 py-1.5 text-right">
@@ -893,8 +893,9 @@ export function ProductForm({ product, options, social }) {
       </div>
 
       {/* ───────── Sidebar ───────── */}
-      <aside className="grid content-start gap-5 lg:sticky lg:top-6">
-        <section aria-labelledby={`${uid}-pub`} className={card}>
+      <aside className="grid content-start gap-5 xl:sticky xl:top-6">
+        {/* On narrower screens Publishing (with the save button) comes last, after Organisation. */}
+        <section aria-labelledby={`${uid}-pub`} className={`${card} order-last xl:order-none`}>
           <h2 id={`${uid}-pub`} className="mb-4 text-base font-extrabold">
             Publishing
           </h2>

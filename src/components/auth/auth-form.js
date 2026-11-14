@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "@/components/ui/password-input";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -89,10 +90,9 @@ export function AuthForm({ mode = "login" }) {
         <label htmlFor="password" className="label">
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           className="input"
           autoComplete={mode === "register" ? "new-password" : "current-password"}
           required

@@ -65,7 +65,7 @@ export function OfferForm({ offer, scopeOptions, social }) {
   };
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+    <form onSubmit={onSubmit} noValidate className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
       <input type="hidden" name="id" value={offer?.id ?? ""} />
       <div className="grid content-start gap-5">
         {state?.ok === false ? (

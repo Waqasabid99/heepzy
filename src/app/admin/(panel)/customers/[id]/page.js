@@ -56,14 +56,14 @@ export default withAdmin(async function CustomerPage({ params, searchParams, adm
         />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid content-start gap-5">
           <section aria-labelledby="ord-title" className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
             <h2 id="ord-title" className="mb-4 font-extrabold">
               Orders
             </h2>
             {c.orders.length ? (
-              <div className="-mx-5 overflow-x-auto sm:-mx-6">
+              <div className="-mx-5 relative overflow-x-auto sm:-mx-6">
                 <table className="w-full min-w-[620px] text-left text-sm">
                   <thead className="border-b border-line text-xs font-bold tracking-[0.06em] text-fg-muted uppercase">
                     <tr>

@@ -118,15 +118,21 @@ export default withAdmin(
               </option>
             ))}
           </select>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <label htmlFor="a-from" className="text-[13px] font-semibold">
               From
             </label>
-            <input id="a-from" name="from" type="date" defaultValue={filters.from} className={select} />
+            <input
+              id="a-from"
+              name="from"
+              type="date"
+              defaultValue={filters.from}
+              className={`${select} min-w-0 flex-1`}
+            />
             <label htmlFor="a-to" className="text-[13px] font-semibold">
               to
             </label>
-            <input id="a-to" name="to" type="date" defaultValue={filters.to} className={select} />
+            <input id="a-to" name="to" type="date" defaultValue={filters.to} className={`${select} min-w-0 flex-1`} />
           </div>
           <button type="submit" className="btn-ink min-h-11">
             Filter

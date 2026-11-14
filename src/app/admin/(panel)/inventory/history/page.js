@@ -66,7 +66,7 @@ export default withAdmin(async function StockHistoryPage({ searchParams }) {
       </p>
 
       {rows.length ? (
-        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
+        <div className="relative overflow-x-auto rounded-2xl border border-line bg-surface">
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="border-b border-line text-xs font-bold tracking-[0.06em] text-fg-muted uppercase">
               <tr>

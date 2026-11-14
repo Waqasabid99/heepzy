@@ -52,6 +52,7 @@ export function CityCombobox({ id, name, province, value, onChange, className, i
         </ComboboxButton>
       </div>
       <ComboboxOptions
+        modal={false}
         anchor="bottom start"
         transition
         className="z-50 max-h-72 w-(--input-width) overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-lg transition-opacity duration-100 [--anchor-gap:6px] empty:invisible data-closed:opacity-0"

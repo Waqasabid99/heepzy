@@ -265,7 +265,7 @@ export function AdminOrderForm({ provinces, initialCustomer, cardAvailable }) {
   const sizes = picked ? picked.variants.filter((v) => v.color === pickColor) : [];
 
   return (
-    <form onSubmit={submit} noValidate className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="grid content-start gap-5">
         {result?.ok === false ? (
           <ErrorSummary message={result.message} errors={errors} labels={LABELS} targetFor={targetFor} />

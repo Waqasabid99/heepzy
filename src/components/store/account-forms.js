@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "@/components/ui/password-input";
 import { startTransition, useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -32,13 +33,23 @@ function Input({ id, label, hint, error, className = "", ...props }) {
         {label}
         {hint ? <span className="font-normal text-fg-muted"> · {hint}</span> : null}
       </label>
-      <input
-        id={id}
-        className={field}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-err` : undefined}
-        {...props}
-      />
+      {props.type === "password" ? (
+        <PasswordInput
+          id={id}
+          className={field}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-err` : undefined}
+          {...props}
+        />
+      ) : (
+        <input
+          id={id}
+          className={field}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-err` : undefined}
+          {...props}
+        />
+      )}
       {error ? (
         <p id={`${id}-err`} className="mt-1 flex items-start gap-1 text-[13px] font-semibold text-sale">
           <AlertCircle className="mt-0.5 size-3.5 shrink-0" />

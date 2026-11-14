@@ -127,7 +127,7 @@ model StoreSettings {
   supportPhone           String?  @db.VarChar(20)
   whatsappNumber         String?  @db.VarChar(20)
   currency               String   @default("PKR") @db.VarChar(3)
-  // Top announcement bar (empty text = fall back to delivery/COD/exchange perks)
+  // Top announcement bar (empty text = hidden)
   announcementText       String?  @db.VarChar(200)
   announcementLink       String?  @db.VarChar(255)
   // Payments

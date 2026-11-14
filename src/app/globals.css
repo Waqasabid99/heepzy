@@ -168,6 +168,17 @@
 
 /* ───────────── Base ───────────── */
 @layer base {
+  /* Fieldsets default to min-width: min-content, which lets wide tables inside
+     them push the page sideways on phones instead of scrolling in their box. */
+  fieldset {
+    min-inline-size: 0;
+  }
+  /* Grid items default to min-width: auto, so a wide table (inside its own
+     scroller) can stretch a single-column grid past the phone's width.
+     Let them shrink; min-w-* utilities still override this. */
+  :where([class~="grid"]) > * {
+    min-width: 0;
+  }
   html {
     -webkit-text-size-adjust: 100%;
     /* Reserve the scrollbar's space so locking scroll (filter drawer) doesn't shift the page. */
@@ -446,4 +457,27 @@ html:has(.modal[open]) {
 
 @utility skip-link {
   @apply sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-fg focus:px-5 focus:py-2.5 focus:text-bg;
+}
+
+/* Account tab bar (phones/tablets): keep the page end and the WhatsApp button clear of it. */
+@media (width < 64rem) {
+  body:has([data-bottom-nav]) {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+  }
+  body:has([data-bottom-nav]) [data-fab] {
+    bottom: calc(6.25rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* iPhones zoom the page when a field with text under 16px is focused, and don't
+   zoom back. Keep form text at 16px on phones. In the utilities layer, where this
+   selector is more specific than text-sm / text-[15px], so it wins. */
+@layer utilities {
+  @media (width < 40rem) {
+    input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"]),
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
 }

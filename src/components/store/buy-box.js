@@ -205,7 +205,7 @@ export function BuyBox({ product, price = null }) {
             {product.sizeChart.description ? (
               <p className="mb-5 text-sm text-fg-muted">{product.sizeChart.description}</p>
             ) : null}
-            <div className="overflow-x-auto rounded-control border border-line">
+            <div className="relative overflow-x-auto rounded-control border border-line">
               <table className="w-full border-collapse text-center text-sm">
                 <caption className="sr-only">{product.sizeChart.name} size conversions</caption>
                 <thead className="bg-muted">

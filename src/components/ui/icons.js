@@ -282,3 +282,23 @@ export const Video = (p) => (
     <path d="m16 10 5-3v10l-5-3" />
   </Svg>
 );
+
+export const Eye = (p) => (
+  <Svg {...p}>
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+    <circle cx="12" cy="12" r="3" />
+  </Svg>
+);
+
+export const EyeOff = (p) => (
+  <Svg {...p}>
+    <path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-2.6 3.6M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6" />
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18" />
+  </Svg>
+);
+
+export const Home = (p) => (
+  <Svg {...p}>
+    <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
+  </Svg>
+);

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { AdminNav, AdminNavFallback } from "@/components/admin/admin-nav";
+import { AdminMobileMenu } from "@/components/admin/admin-mobile-menu";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ExternalLink } from "@/components/ui/icons";
 import { getCurrentUser } from "@/lib/session";
@@ -11,32 +12,61 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
+const Logo = ({ compact = false }) => (
+  <span className="flex items-center gap-2">
+    <span className="font-display text-[26px] leading-none font-semibold tracking-[0.03em] uppercase">
+      {compact ? "H" : "Heepzy"}
+      <span className="text-accent">.</span>
+    </span>
+    {compact ? null : (
+      <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-fg">Admin</span>
+    )}
+  </span>
+);
+
 export default function AdminPanelLayout({ children }) {
   return (
-    <div className="flex min-h-dvh flex-1 flex-col bg-bg lg:flex-row">
-      <aside className="bg-panel p-3 text-on-panel lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:shrink-0 lg:overflow-y-auto lg:p-4 lg:py-6">
-        <Link href="/admin" className="mb-3 flex min-h-11 items-center gap-2 px-3.5 lg:mb-6">
-          <span className="font-display text-[26px] leading-none font-semibold tracking-[0.03em] uppercase">
-            Heepzy<span className="text-accent">.</span>
+    <div className="flex min-h-dvh flex-1 bg-bg">
+      {/* Sidebar: icon rail on tablets, full width from lg. Phones use the menu in the top bar. */}
+      <aside className="sticky top-0 hidden h-dvh shrink-0 flex-col overflow-y-auto bg-panel p-3 py-5 text-on-panel md:flex md:w-[76px] lg:w-64 lg:p-4 lg:py-6">
+        <Link
+          href="/admin"
+          aria-label="Admin dashboard"
+          className="mb-6 flex min-h-11 items-center justify-center lg:justify-start lg:px-3.5"
+        >
+          <span className="lg:hidden">
+            <Logo compact />
           </span>
-          <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-fg">Admin</span>
+          <span className="hidden lg:block">
+            <Logo />
+          </span>
         </Link>
-        <Suspense fallback={<AdminNavFallback />}>
-          <StaffNav />
+        <Suspense fallback={<AdminNavFallback rail />}>
+          <StaffNav rail />
         </Suspense>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex min-h-16 items-center justify-end gap-2 border-b border-line bg-surface px-4 sm:px-6">
+        <header className="relative flex min-h-16 items-center justify-end gap-2 border-b border-line bg-surface px-3 sm:px-6">
+          <AdminMobileMenu>
+            <Suspense fallback={<AdminNavFallback />}>
+              <StaffNav />
+            </Suspense>
+          </AdminMobileMenu>
+          <Link href="/admin" className="mr-auto md:hidden" aria-label="Admin dashboard">
+            <Logo />
+          </Link>
           <Suspense fallback={null}>
             <SignedInAs />
           </Suspense>
-          <Link href="/" target="_blank" className="btn-ghost text-sm">
-            View store <ExternalLink className="size-4" />
-            <span className="sr-only">(opens in a new tab)</span>
+          <Link href="/" target="_blank" className="btn-ghost px-3 text-sm sm:px-4">
+            <span className="hidden sm:inline">View store</span> <ExternalLink className="size-4" />
+            <span className="sr-only">
+              <span className="sm:hidden">View store</span> (opens in a new tab)
+            </span>
           </Link>
           <ThemeToggle className="border border-line" />
         </header>
-        <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
           {children}
         </main>
       </div>
@@ -45,16 +75,16 @@ export default function AdminPanelLayout({ children }) {
 }
 
 /** Nav for the signed-in staff member's role. */
-async function StaffNav() {
+async function StaffNav({ rail = false }) {
   const user = await getCurrentUser();
-  return <AdminNav role={user?.role ?? null} />;
+  return <AdminNav role={user?.role ?? null} rail={rail} />;
 }
 
 async function SignedInAs() {
   const user = await getCurrentUser();
   if (!user || !isStaff(user.role)) return null;
   return (
-    <p className="mr-auto text-[13px] text-fg-muted">
+    <p className="mr-auto hidden text-[13px] text-fg-muted md:block">
       <span className="font-semibold text-fg">{user.name}</span> · {ROLE_LABELS[user.role]}
     </p>
   );

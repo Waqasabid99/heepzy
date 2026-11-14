@@ -392,7 +392,7 @@ export function CheckoutForm({ lines, unavailable, provinces, payment, initial, 
       </div>
 
       {/* Summary */}
-      <aside aria-labelledby={`${uid}-summary`} className="lg:sticky lg:top-24 lg:self-start">
+      <aside aria-labelledby={`${uid}-summary`} className="lg:sticky lg:top-28 lg:self-start">
         <div className={card}>
           <h2 id={`${uid}-summary`} className="mb-4 text-lg font-extrabold">
             Order summary

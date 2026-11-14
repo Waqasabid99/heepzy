@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "@/components/ui/password-input";
 import { startTransition, useActionState, useId, useState } from "react";
 import {
   saveFreeDelivery,
@@ -63,14 +64,25 @@ export function Field({ id, name, label, hint, error, className = "", ...props }
         {label}
         {hint ? <span className="font-normal text-fg-muted"> · {hint}</span> : null}
       </label>
-      <input
-        id={id}
-        name={name}
-        className={field}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-err` : undefined}
-        {...props}
-      />
+      {props.type === "password" ? (
+        <PasswordInput
+          id={id}
+          name={name}
+          className={field}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-err` : undefined}
+          {...props}
+        />
+      ) : (
+        <input
+          id={id}
+          name={name}
+          className={field}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-err` : undefined}
+          {...props}
+        />
+      )}
       {error ? <FieldError id={`${id}-err`} text={error} /> : null}
     </div>
   );

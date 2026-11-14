@@ -5,6 +5,9 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Menu, Search, User } from "@/components/ui/icons";
 import { CartLink, CartLinkFallback } from "./cart-link";
 import { NavLink } from "./nav-link";
+import { AccountMenu } from "./account-menu";
+import { getCurrentUser } from "@/lib/session";
+import { isStaff } from "@/lib/roles";
 
 export const NAV = [
   { href: "/products?sort=newest", label: "New in" },
@@ -37,6 +40,21 @@ function SearchForm({ id, className = "" }) {
   );
 }
 
+function SignInLink() {
+  return (
+    <Link href="/account" aria-label="Sign in or create an account" className={iconBtn}>
+      <User />
+    </Link>
+  );
+}
+
+/** Signed in: initial + menu (with the admin dashboard for staff). Signed out: the sign-in icon. */
+async function AccountControl() {
+  const user = await getCurrentUser();
+  if (!user) return <SignInLink />;
+  return <AccountMenu name={user.name} staff={isStaff(user.role)} />;
+}
+
 /** Flat white store header (Option E1): logo, uppercase nav, search, account, theme, bag. */
 export function SiteHeader() {
   const linkCls =
@@ -44,7 +62,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur supports-backdrop-filter:bg-surface/85">
-      <div className="container-page flex h-16 items-center gap-3 lg:h-[76px] lg:gap-8">
+      <div className="container-page flex h-20 items-center gap-3 lg:h-24 lg:gap-8">
         {/* Mobile menu — native disclosure, works without JS */}
         <details className="group lg:hidden">
           <summary aria-label="Menu" className={`${iconBtn} -ml-2.5 cursor-pointer list-none`}>
@@ -116,9 +134,9 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <SearchForm id="q-desktop" className="mr-2 hidden w-64 md:block xl:w-72" />
           <ThemeToggle className="text-fg" />
-          <Link href="/account" aria-label="Your account" className={iconBtn}>
-            <User />
-          </Link>
+          <Suspense fallback={<SignInLink />}>
+            <AccountControl />
+          </Suspense>
           <Suspense fallback={<CartLinkFallback />}>
             <CartLink />
           </Suspense>

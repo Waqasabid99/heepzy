@@ -99,7 +99,7 @@ export default withAdmin(async function ProductsPage({ searchParams }) {
       </p>
 
       {products.length ? (
-        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
+        <div className="relative overflow-x-auto rounded-2xl border border-line bg-surface">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead className="border-b border-line text-xs font-bold tracking-[0.06em] text-fg-muted uppercase">
               <tr>

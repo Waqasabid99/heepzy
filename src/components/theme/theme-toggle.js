@@ -31,7 +31,7 @@ export function ThemeToggle({ className = "" }) {
       aria-pressed={isDark}
       aria-label="Dark mode"
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className={`btn-ghost size-11 px-0 ${className}`}
+      className={`inline-grid size-11 shrink-0 place-items-center rounded-full text-fg transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring ${className}`}
     >
       <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
         {isDark ? (

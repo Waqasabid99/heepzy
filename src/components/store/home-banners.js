@@ -33,7 +33,7 @@ export function HomeHero({ banner: b, maxDiscount = 0, preview = false }) {
         aria-hidden="true"
         className="absolute inset-0 -z-10 bg-linear-to-r from-panel/95 via-panel/70 to-panel/10 max-md:bg-panel/70"
       />
-      <div className="container-page flex min-h-130 flex-col justify-center py-14 lg:min-h-150">
+      <div className="container-page flex min-h-132 flex-col justify-center py-14 lg:min-h-155">
         {b.kicker ? <p className="script text-[clamp(34px,4vw,50px)] text-saffron">{b.kicker}</p> : null}
         <Heading
           id={preview ? undefined : "hero-title"}

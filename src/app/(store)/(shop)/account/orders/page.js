@@ -16,8 +16,8 @@ const dateFmt = new Intl.DateTimeFormat("en-PK", {
 
 export default function MyOrdersPage() {
   return (
-    <section className="container-page max-w-4xl py-10 lg:py-14" aria-labelledby="orders-title">
-      <h1 id="orders-title" className="mb-8 display text-[clamp(40px,5vw,64px)]">
+    <section aria-labelledby="orders-title">
+      <h1 id="orders-title" className="mb-6 display text-[clamp(36px,4vw,52px)]">
         My orders
       </h1>
       <Suspense fallback={<p className="text-fg-muted">Loading your orders…</p>}>
