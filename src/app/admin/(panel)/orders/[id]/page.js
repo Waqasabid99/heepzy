@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { withAdmin } from "@/components/admin/with-admin";
-import { AdminPage } from "@/components/admin/ui";
+import { AdminPage, Notice } from "@/components/admin/ui";
+import { CustomerLink } from "@/components/admin/customer-link";
 import { OrderStatusBadge, PaymentBadge } from "@/components/admin/order-badges";
 import { OrderActions } from "@/components/admin/order-actions";
 import { getAdminOrder, NEXT_STATUSES } from "@/lib/admin/orders";
@@ -20,6 +21,7 @@ const dateFmt = new Intl.DateTimeFormat("en-PK", {
   minute: "2-digit",
   timeZone: "Asia/Karachi",
 });
+const PROVIDER = { COD: "Cash on delivery", SAFEPAY: "Safepay", MANUAL: "Paid offline" };
 const PAYMENT_STATUS = {
   INITIATED: "Started",
   PENDING: "Waiting",
@@ -28,8 +30,8 @@ const PAYMENT_STATUS = {
   CANCELLED: "Cancelled",
 };
 
-export default withAdmin(async function OrderPage({ params }) {
-  const { id } = await params;
+export default withAdmin(async function OrderPage({ params, searchParams }) {
+  const [{ id }, sp] = await Promise.all([params, searchParams]);
   const order = await getAdminOrder(id);
   if (!order) notFound();
   const waPhone = order.shipPhone.replace(/^0/, "92");
@@ -46,6 +48,12 @@ export default withAdmin(async function OrderPage({ params }) {
         </>
       }
     >
+      {sp.created ? (
+        <Notice>
+          Order created and stock reserved.
+          {order.paymentMethod === "CARD" ? " Send the customer the payment link below." : ""}
+        </Notice>
+      ) : null}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="grid content-start gap-5">
           <section aria-labelledby="items-title" className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
@@ -80,7 +88,10 @@ export default withAdmin(async function OrderPage({ params }) {
             <dl className="mt-5 grid gap-1.5 border-t border-line pt-4 text-sm">
               <Row term="Subtotal" value={formatPKR(order.subtotal)} />
               {Number(order.discountTotal) ? (
-                <Row term={`Voucher ${order.couponCode ?? ""}`} value={`− ${formatPKR(order.discountTotal)}`} />
+                <Row
+                  term={order.couponCode ? `Discount (voucher ${order.couponCode})` : "Discount"}
+                  value={`− ${formatPKR(order.discountTotal)}`}
+                />
               ) : null}
               <Row
                 term={`Delivery${order.deliveryRateName ? ` · ${order.deliveryRateName}` : ""}`}
@@ -102,9 +113,13 @@ export default withAdmin(async function OrderPage({ params }) {
               </h2>
               <p className="font-semibold">{order.shipFullName}</p>
               <p>
-                <a href={`mailto:${order.email}`} className="hover:underline">
-                  {order.email}
-                </a>
+                {order.email ? (
+                  <a href={`mailto:${order.email}`} className="hover:underline">
+                    {order.email}
+                  </a>
+                ) : (
+                  <span className="text-fg-muted">No email</span>
+                )}
               </p>
               <p className="flex flex-wrap gap-x-3">
                 <a href={`tel:${order.phone}`} className="hover:underline">
@@ -173,7 +188,7 @@ export default withAdmin(async function OrderPage({ params }) {
                   className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted px-3 py-2"
                 >
                   <span>
-                    <span className="font-semibold">{p.provider === "COD" ? "Cash on delivery" : "Safepay"}</span> ·{" "}
+                    <span className="font-semibold">{PROVIDER[p.provider] ?? p.provider}</span> ·{" "}
                     {PAYMENT_STATUS[p.status] ?? p.status}
                     {p.providerState ? ` (${p.providerState})` : ""}
                     {p.providerPaymentId ? (
@@ -207,7 +222,17 @@ export default withAdmin(async function OrderPage({ params }) {
           </section>
         </div>
 
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        <aside className="grid content-start gap-4 lg:sticky lg:top-6 lg:self-start">
+          {order.status !== "CANCELLED" ? (
+            <CustomerLink
+              orderId={order.id}
+              orderNumber={order.orderNumber}
+              phone={order.phone}
+              needsPayment={
+                order.paymentMethod === "CARD" && order.paymentStatus !== "PAID" && order.status === "PENDING"
+              }
+            />
+          ) : null}
           <OrderActions
             order={{
               id: order.id,

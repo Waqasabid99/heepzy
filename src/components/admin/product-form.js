@@ -999,8 +999,14 @@ export function ProductForm({ product, options, social }) {
               summary={{
                 slug: product.slug,
                 name: product.name,
-                price: Number(product.basePrice),
-                compareAt: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+                // A running offer wins over the saved price (same as the store).
+                price: social.offer ? social.offer.price : Number(product.basePrice),
+                compareAt: social.offer
+                  ? social.offer.compareAt
+                  : product.compareAtPrice
+                    ? Number(product.compareAtPrice)
+                    : null,
+                offer: social.offer ? { name: social.offer.name, endsAt: social.offer.endsAt } : null,
                 shortDescription: product.shortDescription,
                 gender: product.gender,
                 categorySlugs: options.categories.filter((c) => product.categoryIds.includes(c.id)).map((c) => c.slug),

@@ -9,6 +9,14 @@ import { BuyBox } from "@/components/store/buy-box";
 import { ProductCard } from "@/components/store/product-card";
 import { Star } from "@/components/ui/icons";
 
+const offerEnds = new Intl.DateTimeFormat("en-PK", {
+  day: "numeric",
+  month: "short",
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "Asia/Karachi",
+});
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const p = await getProduct(slug);
@@ -121,6 +129,15 @@ async function ProductDetails({ params }) {
                   <span className="bg-accent px-2 py-0.5 text-xs font-bold text-accent-fg">
                     Save {formatPKR(product.compareAt - product.price)}
                   </span>
+                ) : null}
+                {product.offer ? (
+                  <Link
+                    href={`/products?offer=${product.offer.slug}`}
+                    className="basis-full text-[13px] font-semibold text-brand hover:underline"
+                  >
+                    {product.offer.name}
+                    {product.offer.endsAt ? ` · ends ${offerEnds.format(new Date(product.offer.endsAt))}` : ""}
+                  </Link>
                 ) : null}
                 {product.rating.count > 0 ? (
                   <a href="#reviews" className="inline-flex items-center gap-1 text-[13px] link-underline">

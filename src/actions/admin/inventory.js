@@ -3,7 +3,7 @@
 import { refresh, updateTag } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { audit } from "@/lib/audit";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { MANUAL_REASONS } from "@/lib/admin/inventory";
@@ -26,7 +26,7 @@ const adjustSchema = z.object({
  * orders can't push stock below zero.
  */
 export async function adjustStock(_prev, formData) {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const parsed = adjustSchema.safeParse({
     variantId: formData.get("variantId"),
     mode: formData.get("mode"),

@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { toPlain } from "@/lib/serialize";
 
 /**
@@ -23,7 +23,7 @@ export function parseProductListParams(sp = {}) {
 }
 
 export async function listAdminProducts({ q, status, category, stock, page }) {
-  await requireAdmin();
+  await requireStaff();
   const settings = await db.storeSettings.findUnique({ where: { id: 1 }, select: { lowStockThreshold: true } });
   const low = settings?.lowStockThreshold ?? 5;
 
@@ -89,7 +89,7 @@ export async function listAdminProducts({ q, status, category, stock, page }) {
 }
 
 export async function getProductFormOptions() {
-  await requireAdmin();
+  await requireStaff();
   const [categories, brands, sizeCharts] = await Promise.all([
     db.category.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, name: true, slug: true } }),
     db.brand.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
@@ -107,7 +107,7 @@ export async function getProductFormOptions() {
 
 /** Full product for the editor, in the exact shape the form expects. */
 export async function getAdminProduct(id) {
-  await requireAdmin();
+  await requireStaff();
   if (typeof id !== "string" || id.length > 40) return null;
   const p = await db.product.findFirst({
     where: { id, deletedAt: null },
@@ -174,7 +174,7 @@ export async function getAdminProduct(id) {
  * `excludeId` lets a product keep its own slug.
  */
 export async function uniqueProductSlug(base, excludeId) {
-  await requireAdmin();
+  await requireStaff();
   const root = (base || "product").slice(0, 200).replace(/-+$/, "");
   const rows = await db.product.findMany({
     where: { slug: { startsWith: root }, ...(excludeId ? { NOT: { id: excludeId } } : {}) },

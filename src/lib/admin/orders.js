@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { toPlain } from "@/lib/serialize";
 
 export const ORDERS_PAGE_SIZE = 25;
@@ -24,7 +24,7 @@ export function parseOrderListParams(sp = {}) {
   const payment = ["UNPAID", "PENDING", "PAID", "FAILED", "REFUNDED"].includes(one(sp.payment))
     ? one(sp.payment)
     : null;
-  const method = ["COD", "CARD"].includes(one(sp.method)) ? one(sp.method) : null;
+  const method = ["COD", "CARD", "MANUAL"].includes(one(sp.method)) ? one(sp.method) : null;
   return {
     q: (one(sp.q) ?? "").toString().trim().slice(0, 100),
     status,
@@ -35,7 +35,7 @@ export function parseOrderListParams(sp = {}) {
 }
 
 export async function listAdminOrders({ q, status, payment, method, page }) {
-  await requireAdmin();
+  await requireStaff();
   const search = q
     ? {
         OR: [
@@ -100,7 +100,7 @@ export async function listAdminOrders({ q, status, payment, method, page }) {
 }
 
 export async function getAdminOrder(id) {
-  await requireAdmin();
+  await requireStaff();
   if (typeof id !== "string" || id.length > 40) return null;
   const order = await db.order.findUnique({
     where: { id },
@@ -118,7 +118,10 @@ export async function getAdminOrder(id) {
     ? await db.user.findMany({ where: { id: { in: actorIds } }, select: { id: true, name: true, email: true } })
     : [];
   const names = new Map(actors.map((a) => [a.id, a.name || a.email]));
-  const previousOrders = await db.order.count({ where: { email: order.email, id: { not: order.id } } });
+  // Orders without an email (taken by phone) are matched on the phone number instead.
+  const previousOrders = await db.order.count({
+    where: { ...(order.email ? { email: order.email } : { phone: order.phone }), id: { not: order.id } },
+  });
 
   const plain = toPlain(order);
   return {

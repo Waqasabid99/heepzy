@@ -16,6 +16,8 @@ const PAYMENT = {
   REFUNDED: ["Refunded", "bg-muted text-fg-muted"],
 };
 
+const METHOD = { COD: "Cash on delivery", CARD: "Card (Safepay)", WALLET: "Wallet", MANUAL: "Paid offline" };
+
 const pill = "inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap";
 
 export function OrderStatusBadge({ status }) {
@@ -28,7 +30,7 @@ export function PaymentBadge({ method, status }) {
   return (
     <span className="flex flex-col items-start gap-1">
       <span className={`${pill} ${cls}`}>{text}</span>
-      <span className="text-xs text-fg-muted">{method === "COD" ? "Cash on delivery" : "Card (Safepay)"}</span>
+      <span className="text-xs text-fg-muted">{METHOD[method] ?? method}</span>
     </span>
   );
 }

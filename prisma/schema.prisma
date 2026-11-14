@@ -626,6 +626,7 @@ enum PaymentMethod {
   COD
   CARD
   WALLET
+  MANUAL // paid outside the site (bank transfer, JazzCash/Easypaisa, cash), recorded by an admin
 }
 
 model Order {
@@ -735,6 +736,7 @@ model OrderStatusHistory {
 enum PaymentProvider {
   COD
   SAFEPAY
+  MANUAL
 }
 
 enum TransactionStatus {

@@ -8,22 +8,7 @@ import { formatPKR } from "@/lib/money";
 import { AlertCircle, Banknote, Check, CreditCard, ShieldCheck, Truck } from "@/components/ui/icons";
 import { CityCombobox } from "@/components/store/city-combobox";
 import { canonicalCity, isListedCity } from "@/lib/pk-cities";
-
-/**
- * Keep the phone box to a Pakistani mobile number while typing: digits only,
- * "0300 1234567" format, max 11 digits. A pasted "+92 300 1234567" becomes
- * "0300 1234567". The server validates again when the order is placed.
- */
-function formatPhone(raw) {
-  let d = String(raw ?? "").replace(/\D/g, "");
-  if (d.startsWith("92")) {
-    d = d.slice(0, 12);
-    if (d.length < 12) return `+${d}`;
-    d = `0${d.slice(2)}`;
-  } else if (d.startsWith("3")) d = `0${d}`;
-  d = d.slice(0, 11);
-  return d.length > 4 ? `${d.slice(0, 4)} ${d.slice(4)}` : d;
-}
+import { formatPhone } from "@/lib/phone";
 
 const LABELS = {
   email: "Email",

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { safeRedirectPath } from "@/lib/safe-redirect";
+import { isStaff } from "@/lib/roles";
 
 const COPY = {
   login: { submit: "Sign in", pending: "Signing in…" },
@@ -50,7 +51,7 @@ export function AuthForm({ mode = "login" }) {
             error.status === 429 ? "Too many attempts. Please wait a minute." : "Incorrect email or password.",
           );
         }
-        if (mode === "admin" && data?.user?.role !== "admin") {
+        if (mode === "admin" && !isStaff(data?.user?.role)) {
           await authClient.signOut();
           throw new Error("This account does not have admin access.");
         }

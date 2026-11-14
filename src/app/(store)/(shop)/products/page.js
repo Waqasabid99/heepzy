@@ -34,6 +34,7 @@ function hrefWith(f, overrides = {}) {
   for (const c of next.category) qs.append("category", c);
   for (const s of next.size) qs.append("size", s);
   if (next.sale) qs.set("sale", "1");
+  if (next.offer) qs.set("offer", next.offer);
   if (next.min != null) qs.set("min", next.min);
   if (next.max != null) qs.set("max", next.max);
   if (next.q) qs.set("q", next.q);
@@ -49,21 +50,24 @@ async function Collection({ searchParams }) {
   const sp = await searchParams;
   const f = parseFilters(sp);
   // Render pages 1…N so /products?page=N (written by infinite scroll) restores the same list.
-  const [{ products, total, page }, facets] = await Promise.all([listProducts(f, "through"), getFacets()]);
+  const [{ products, total, page, offer }, facets] = await Promise.all([listProducts(f, "through"), getFacets()]);
   // Query without `page`, passed to the client for fetching further pages.
   const query = Object.fromEntries(Object.entries(sp).filter(([k]) => k !== "page"));
 
   const catName = (slug) => facets.categories.find((c) => c.slug === slug)?.name ?? slug;
-  const title =
-    f.category.length === 1
-      ? `${f.gender ? `${genderName(f.gender)}'s ` : ""}${catName(f.category[0])}`
-      : f.gender
-        ? `${genderName(f.gender)}'s shoes`
-        : f.sale
-          ? "On sale"
-          : f.sort === "newest"
-            ? "New in"
-            : "All shoes";
+  const title = offer
+    ? offer.name
+    : f.offer
+      ? "Offer ended"
+      : f.category.length === 1
+        ? `${f.gender ? `${genderName(f.gender)}'s ` : ""}${catName(f.category[0])}`
+        : f.gender
+          ? `${genderName(f.gender)}'s shoes`
+          : f.sale
+            ? "On sale"
+            : f.sort === "newest"
+              ? "New in"
+              : "All shoes";
 
   const active = [
     ...(f.gender ? [{ label: genderName(f.gender), href: hrefWith(f, { gender: null }) }] : []),
@@ -73,13 +77,14 @@ async function Collection({ searchParams }) {
     })),
     ...f.size.map((s) => ({ label: `EU ${s}`, href: hrefWith(f, { size: f.size.filter((x) => x !== s) }) })),
     ...(f.sale ? [{ label: "On sale", href: hrefWith(f, { sale: false }) }] : []),
+    ...(f.offer ? [{ label: offer?.name ?? "Offer", href: hrefWith(f, { offer: null }) }] : []),
     ...(f.min != null || f.max != null
       ? [
-        {
-          label: f.max != null ? `${formatPKR(f.min ?? 0)} – ${formatPKR(f.max)}` : `From ${formatPKR(f.min)}`,
-          href: hrefWith(f, { min: null, max: null }),
-        },
-      ]
+          {
+            label: f.max != null ? `${formatPKR(f.min ?? 0)} – ${formatPKR(f.max)}` : `From ${formatPKR(f.min)}`,
+            href: hrefWith(f, { min: null, max: null }),
+          },
+        ]
       : []),
     ...(f.q ? [{ label: `“${f.q}”`, href: hrefWith(f, { q: "" }) }] : []),
   ];
@@ -145,6 +150,7 @@ async function Collection({ searchParams }) {
             <form method="get" action="/products" className="flex min-h-0 flex-1 flex-col">
               {f.sort !== "featured" ? <input type="hidden" name="sort" value={f.sort} /> : null}
               {f.q ? <input type="hidden" name="q" value={f.q} /> : null}
+              {f.offer ? <input type="hidden" name="offer" value={f.offer} /> : null}
 
               <div className="flex flex-1 flex-col gap-9 overflow-y-auto px-6 py-7 sm:px-8">
                 <fieldset>
@@ -216,13 +222,7 @@ async function Collection({ searchParams }) {
                 <PriceRange ceiling={facets.priceMax} defaultMin={f.min} defaultMax={f.max} />
 
                 <label className="-mt-3 flex cursor-pointer items-center gap-3 text-sm">
-                  <input
-                    type="checkbox"
-                    name="sale"
-                    value="1"
-                    defaultChecked={f.sale}
-                    className="size-4.5 accent-fg"
-                  />
+                  <input type="checkbox" name="sale" value="1" defaultChecked={f.sale} className="size-4.5 accent-fg" />
                   On sale only
                 </label>
               </div>

@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 
 /** Admin inventory reads (uncached, admin-only). One row per product variant (colour × size). */
 export const INVENTORY_PAGE_SIZE = 50;
@@ -45,7 +45,7 @@ async function lowThreshold() {
 const baseWhere = { isActive: true, product: { deletedAt: null } };
 
 export async function getInventoryStats() {
-  await requireAdmin();
+  await requireStaff();
   const low = await lowThreshold();
   const rows = await db.productVariant.findMany({
     where: baseWhere,
@@ -76,7 +76,7 @@ export async function getInventoryStats() {
 }
 
 export async function listInventory({ q, stock, category, sort, page }) {
-  await requireAdmin();
+  await requireStaff();
   const low = await lowThreshold();
   const where = {
     ...baseWhere,
@@ -160,7 +160,7 @@ export function parseHistoryParams(sp = {}) {
 }
 
 export async function listMovements({ variant, reason, page }) {
-  await requireAdmin();
+  await requireStaff();
   const where = { ...(variant ? { variantId: variant } : {}), ...(reason ? { reason } : {}) };
   const [total, rows, focus] = await Promise.all([
     db.inventoryMovement.count({ where }),

@@ -5,7 +5,7 @@ import { OrderStatusBadge, PaymentBadge } from "@/components/admin/order-badges"
 import { listAdminOrders, ORDER_STATUSES, parseOrderListParams } from "@/lib/admin/orders";
 import { ORDER_STATUS_LABELS } from "@/lib/orders";
 import { formatPKR } from "@/lib/money";
-import { Search } from "@/components/ui/icons";
+import { Plus, Search } from "@/components/ui/icons";
 
 export const metadata = { title: "Orders" };
 
@@ -36,6 +36,11 @@ export default withAdmin(async function OrdersPage({ searchParams }) {
     <AdminPage
       title="Orders"
       description="Confirm, pack, ship and track orders. Cash on delivery and Safepay card payments."
+      actions={
+        <Link href="/admin/orders/new" className="btn-primary min-h-11">
+          <Plus className="size-4" /> New order
+        </Link>
+      }
     >
       <nav aria-label="Order status" className="mb-5 flex flex-wrap gap-2">
         {[[null, "All", all], ...ORDER_STATUSES.map((s) => [s, ORDER_STATUS_LABELS[s], counts[s] ?? 0])].map(
@@ -76,6 +81,7 @@ export default withAdmin(async function OrdersPage({ searchParams }) {
           <option value="">Any method</option>
           <option value="COD">Cash on delivery</option>
           <option value="CARD">Card (Safepay)</option>
+          <option value="MANUAL">Paid offline</option>
         </select>
         <label htmlFor="o-pay" className="sr-only">
           Payment status

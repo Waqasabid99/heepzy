@@ -158,7 +158,18 @@ async function taxRateFor(province) {
  * Full quote for the bag. `lines` are available cart lines (from getCart).
  * Never throws for user errors — returns messages instead.
  */
-export async function quote({ lines, settings, city, province, rateId, paymentMethod, couponCode, email, userId }) {
+export async function quote({
+  lines,
+  settings,
+  city,
+  province,
+  rateId,
+  paymentMethod,
+  couponCode,
+  email,
+  userId,
+  extraDiscount = 0,
+}) {
   const subtotal = round2(lines.reduce((n, l) => n + l.lineTotal, 0));
 
   let coupon = null;
@@ -168,7 +179,10 @@ export async function quote({ lines, settings, city, province, rateId, paymentMe
     if (res.ok) coupon = res;
     else couponMessage = res.message;
   }
-  const discount = coupon?.discount ?? 0;
+  const couponDiscount = coupon?.discount ?? 0;
+  // Admin-only manual discount on top of any voucher, never more than what's left.
+  const extra = round2(Math.min(Math.max(0, Number(extraDiscount) || 0), subtotal - couponDiscount));
+  const discount = round2(couponDiscount + extra);
   const afterDiscount = round2(subtotal - discount);
 
   const rates =
@@ -192,6 +206,8 @@ export async function quote({ lines, settings, city, province, rateId, paymentMe
   return {
     subtotal,
     discount,
+    couponDiscount,
+    extraDiscount: extra,
     coupon: coupon
       ? { code: coupon.coupon.code, description: coupon.coupon.description, freeShipping: coupon.freeShipping }
       : null,

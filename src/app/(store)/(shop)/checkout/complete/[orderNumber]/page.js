@@ -36,9 +36,19 @@ async function OrderView({ params, searchParams }) {
   let Icon = Check;
   let title = "Thank you! Your order is placed.";
   let text = `We'll call or WhatsApp you on ${order.phone} to confirm, then pack your order. Pay the rider in cash on delivery.`;
-  if (isCard && paid) {
+  // An order the shop created with a card-payment link: no Safepay attempt yet.
+  const notStarted = awaiting && !order.payments[0]?.providerPaymentId;
+  if (order.paymentMethod === "MANUAL") {
+    title = "Thank you! Your order is confirmed.";
+    text = "Your payment has been received. We're getting your order ready and will keep you updated.";
+  } else if (isCard && paid) {
     title = "Payment received. Thank you!";
     text = "Your order is confirmed and we're getting it ready. We'll send updates by email and SMS.";
+  } else if (notStarted) {
+    tone = "info";
+    Icon = Clock;
+    title = "Complete your payment";
+    text = "Your order is ready. Pay securely by card or wallet through Safepay to confirm it.";
   } else if (awaiting && sp.payment === "cancelled") {
     tone = "warning";
     Icon = AlertCircle;
@@ -110,7 +120,10 @@ async function OrderView({ params, searchParams }) {
           <dl className="mt-5 grid gap-1.5 border-t border-line pt-4 text-sm">
             <Row term="Subtotal" value={formatPKR(order.subtotal)} />
             {Number(order.discountTotal) ? (
-              <Row term={`Voucher ${order.couponCode ?? ""}`} value={`− ${formatPKR(order.discountTotal)}`} />
+              <Row
+                term={order.couponCode ? `Discount (voucher ${order.couponCode})` : "Discount"}
+                value={`− ${formatPKR(order.discountTotal)}`}
+              />
             ) : null}
             <Row term="Delivery" value={Number(order.shippingTotal) ? formatPKR(order.shippingTotal) : "Free"} />
             {Number(order.codFee) ? <Row term="Cash on delivery fee" value={formatPKR(order.codFee)} /> : null}

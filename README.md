@@ -84,7 +84,7 @@ src/
 - **Pricing**: `TaxRate` (GST, optional per province, inclusive/exclusive via settings), `DeliveryZone` (cities/provinces) + `DeliveryRate` (price, COD fee, free-above), global free delivery threshold, `Promotion` (automatic offers), `Coupon` (voucher codes with limits) + `CouponRedemption`.
 - **Orders**: `Order` keeps an address and price **snapshot**; `OrderItem` snapshots name, SKU, size and price. `OrderStatusHistory` is the timeline, and `Payment` records COD or Safepay attempts keyed by a unique `merchantRef` (idempotency). `WebhookEvent` deduplicates provider callbacks.
 - **Returns & refunds**: `ReturnRequest` (RMA) → `ReturnItem` → `Refund`. They can be switched on or off with `StoreSettings.returnsEnabled` / `refundsEnabled`.
-- **Admin**: `role = "admin"` on `User` (Better Auth admin plugin: ban, impersonate, sessions). `AuditLog` records every admin mutation.
+- **Staff roles** (`src/lib/roles.js`): `admin` is the owner (everything, including staff accounts, roles and the audit log); `manager` runs the store (orders, customers, catalogue, inventory, offers, vouchers, content, settings) but can't manage staff or read the audit log. The owner changes roles on a customer's page in the admin; role changes sign the person out so they apply straight away. Better Auth's admin plugin endpoints stay owner-only. `AuditLog` records every admin mutation.
 
 ## Security model
 

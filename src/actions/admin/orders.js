@@ -3,7 +3,7 @@
 import { refresh, updateTag } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { audit } from "@/lib/audit";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { NEXT_STATUSES } from "@/lib/admin/orders";
@@ -21,7 +21,7 @@ const statusSchema = z.object({
 
 /** Move an order to its next status (with courier/tracking when shipping). useActionState-compatible. */
 export async function updateOrderStatus(_prev, formData) {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const parsed = statusSchema.safeParse({
     orderId: formData.get("orderId"),
     status: formData.get("status"),
@@ -104,7 +104,7 @@ export async function updateOrderStatus(_prev, formData) {
 
 /** Save the private admin note on an order. */
 export async function saveAdminNote(_prev, formData) {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const parsed = z
     .object({ orderId: id, adminNote: z.string().trim().max(2000) })
     .safeParse({ orderId: formData.get("orderId"), adminNote: formData.get("adminNote") ?? "" });
@@ -117,7 +117,7 @@ export async function saveAdminNote(_prev, formData) {
 
 /** Ask Safepay for the latest state of this order's card payment. */
 export async function recheckPayment(orderId) {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   if (!id.safeParse(orderId).success) return { ok: false, message: "Invalid request." };
   const payment = await db.payment.findFirst({
     where: { orderId, provider: "SAFEPAY", providerPaymentId: { not: null } },

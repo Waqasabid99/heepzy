@@ -4,7 +4,7 @@ import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/session";
+import { requireStaff } from "@/lib/session";
 import { audit } from "@/lib/audit";
 import { listUploads, saveImage } from "@/lib/uploads";
 import { CATALOG_TAG } from "@/lib/catalog";
@@ -158,7 +158,7 @@ function refreshCatalog(...slugs) {
 
 /** Create or update a product with its images and variants. useActionState-compatible. */
 export async function saveProduct(_prev, formData) {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const raw = readForm(formData);
   // Echo typed values back so the form keeps them when validation fails (React resets forms after actions).
   const { images: _i, variants: _v, ...values } = raw;
@@ -332,7 +332,7 @@ export async function saveProduct(_prev, formData) {
 
 /** Live preview of the automatic URL for a product name (unique among other products). */
 export async function previewProductSlug(name, id) {
-  await requireAdmin();
+  await requireStaff();
   const base = slugify(String(name ?? "").slice(0, 200));
   if (!base) return { slug: "" };
   return { slug: await uniqueProductSlug(base, cuid.safeParse(id).success ? id : undefined) };
@@ -343,7 +343,7 @@ export async function previewProductSlug(name, id) {
  * uploads not attached to any product yet. Newest first.
  */
 export async function listProductMedia() {
-  await requireAdmin();
+  await requireStaff();
   const [rows, uploads] = await Promise.all([
     db.productImage.findMany({
       orderBy: { createdAt: "desc" },
@@ -366,7 +366,7 @@ export async function listProductMedia() {
 
 /** Upload one product image; returns its URL for the form to add. */
 export async function uploadProductImage(formData) {
-  await requireAdmin();
+  await requireStaff();
   const result = await saveImage(formData.get("file"), { folder: "products" });
   if (result.error) return { ok: false, message: result.error };
   return { ok: true, url: result.url };
@@ -374,7 +374,7 @@ export async function uploadProductImage(formData) {
 
 /** Publish / unpublish / archive from the list or editor. */
 export async function setProductStatus(id, status) {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   if (!cuid.safeParse(id).success || !STATUSES.includes(status)) return { ok: false, message: "Invalid request." };
   const product = await db.product.findFirst({
     where: { id, deletedAt: null },
@@ -398,7 +398,7 @@ export async function setProductStatus(id, status) {
  * (hidden everywhere, order history keeps its snapshot); others are removed.
  */
 export async function deleteProduct(id) {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   if (!cuid.safeParse(id).success) return { ok: false, message: "Invalid request." };
   const product = await db.product.findFirst({
     where: { id, deletedAt: null },

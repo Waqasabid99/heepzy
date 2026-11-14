@@ -12,18 +12,12 @@ import { getClientIp } from "@/lib/request";
 import { LIMITS, rateLimit } from "@/lib/rate-limit";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { canonicalCity } from "@/lib/pk-cities";
+import { normalizePhone } from "@/lib/phone";
 import { newAccessToken, nextOrderNumber, PROVINCES, quote } from "@/lib/checkout";
 import { createCheckout, safepayConfigured } from "@/lib/payments/safepay";
-import { getOrderForViewer } from "@/lib/orders";
+import { createOrder, getOrderForViewer } from "@/lib/orders";
 
 const appUrl = () => env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
-
-/** Pakistani mobile → 03XXXXXXXXX. Accepts +92 3XX…, 92…, 03…, with spaces/dashes. */
-function normalizePhone(v) {
-  const digits = String(v ?? "").replace(/[\s-]/g, "");
-  const m = digits.match(/^(?:\+?92|0)?(3\d{9})$/);
-  return m ? `0${m[1]}` : null;
-}
 
 async function availableLines() {
   const cart = await getCart();
@@ -181,102 +175,33 @@ export async function placeOrder(_prev, formData) {
   }
 
   try {
-    await db.$transaction(async (tx) => {
-      const order = await tx.order.create({
-        data: {
-          orderNumber,
-          userId: user?.id ?? null,
-          email: f.email,
-          phone: f.phone,
-          status: "PENDING",
-          paymentStatus: f.paymentMethod === "CARD" ? "PENDING" : "UNPAID",
-          paymentMethod: f.paymentMethod,
-          subtotal: q.subtotal.toFixed(2),
-          discountTotal: q.discount.toFixed(2),
-          shippingTotal: q.shipping.toFixed(2),
-          taxTotal: q.taxTotal.toFixed(2),
-          codFee: q.codFee.toFixed(2),
-          grandTotal: q.grandTotal.toFixed(2),
-          couponCode: q.coupon?.code ?? null,
-          deliveryRateName: `${q.rate.name}${q.rate.zone ? ` (${q.rate.zone})` : ""}`,
-          shipFullName: f.fullName,
-          shipPhone: f.phone,
-          shipLine1: f.line1,
-          shipLine2: f.line2 || null,
-          shipCity: f.city,
-          shipProvince: f.province,
-          shipPostalCode: f.postalCode || null,
-          customerNote: f.note || null,
-          accessTokenHash: access.hash,
-          ipAddress: await getClientIp(),
-          items: {
-            create: lines.map((l) => ({
-              productId: l.productId,
-              variantId: l.variantId,
-              productName: l.name,
-              sku: l.sku,
-              color: l.color,
-              size: l.size,
-              imageUrl: l.image?.url ?? null,
-              unitPrice: l.unitPrice.toFixed(2),
-              quantity: l.quantity,
-              lineTotal: l.lineTotal.toFixed(2),
-            })),
-          },
-          statusHistory: { create: { status: "PENDING", note: "Order placed" } },
-          payments: {
-            create: {
-              provider: f.paymentMethod === "CARD" ? "SAFEPAY" : "COD",
-              method: f.paymentMethod,
-              amount: q.grandTotal.toFixed(2),
-              status: f.paymentMethod === "CARD" ? "PENDING" : "INITIATED",
-              merchantRef: `${orderNumber}-1`,
-              providerPaymentId: checkout?.tracker ?? null,
-            },
-          },
-        },
-        select: { id: true },
-      });
-
-      // Reserve stock atomically; fails if someone else bought the last pair.
-      for (const l of lines) {
-        const res = await tx.productVariant.updateMany({
-          where: { id: l.variantId, isActive: true, stock: { gte: l.quantity } },
-          data: { stock: { decrement: l.quantity } },
-        });
-        if (res.count === 0) throw new Error(`OUT_OF_STOCK:${l.name} (${l.color}, ${l.size})`);
-        const v = await tx.productVariant.findUnique({ where: { id: l.variantId }, select: { stock: true } });
-        await tx.inventoryMovement.create({
-          data: {
-            variantId: l.variantId,
-            change: -l.quantity,
-            stockAfter: v.stock,
-            reason: "SALE",
-            orderId: order.id,
-            note: `Order ${orderNumber}`,
-          },
-        });
-      }
-
-      if (q.coupon) {
-        const coupon = await tx.coupon.findUnique({ where: { code: q.coupon.code }, select: { id: true } });
-        const res = await tx.coupon.updateMany({
-          where: { id: coupon.id, OR: [{ usageLimit: null }, { usedCount: { lt: db.coupon.fields.usageLimit } }] },
-          data: { usedCount: { increment: 1 } },
-        });
-        if (res.count === 0) throw new Error("COUPON_USED");
-        await tx.couponRedemption.create({
-          data: {
-            couponId: coupon.id,
-            orderId: order.id,
-            userId: user?.id ?? null,
-            email: f.email,
-            amount: q.discount.toFixed(2),
-          },
-        });
-      }
-
-      if (cart.id) await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+    await createOrder({
+      orderNumber,
+      accessHash: access.hash,
+      userId: user?.id ?? null,
+      email: f.email,
+      phone: f.phone,
+      ship: {
+        fullName: f.fullName,
+        phone: f.phone,
+        line1: f.line1,
+        line2: f.line2,
+        city: f.city,
+        province: f.province,
+        postalCode: f.postalCode,
+      },
+      lines,
+      q,
+      paymentMethod: f.paymentMethod,
+      paymentStatus: f.paymentMethod === "CARD" ? "PENDING" : "UNPAID",
+      payment: {
+        provider: f.paymentMethod === "CARD" ? "SAFEPAY" : "COD",
+        status: f.paymentMethod === "CARD" ? "PENDING" : "INITIATED",
+        providerPaymentId: checkout?.tracker ?? null,
+      },
+      customerNote: f.note || null,
+      ipAddress: await getClientIp(),
+      clearCartId: cart.id,
     });
   } catch (e) {
     const msg = String(e?.message ?? "");

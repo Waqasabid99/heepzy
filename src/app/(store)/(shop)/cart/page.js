@@ -66,8 +66,18 @@ async function CartContents() {
                       {l.color} · EU {l.size}
                     </p>
                   </div>
-                  <p className="font-display text-xl font-medium">{formatPKR(l.lineTotal)}</p>
+                  <p className="text-right font-display text-xl font-medium">
+                    {l.compareAt ? (
+                      <span className="block text-sm text-fg-muted line-through">
+                        <span className="sr-only">Was </span>
+                        {formatPKR(l.compareAt * l.quantity)}
+                      </span>
+                    ) : null}
+                    {l.compareAt ? <span className="sr-only">Now </span> : null}
+                    {formatPKR(l.lineTotal)}
+                  </p>
                 </div>
+                {l.offer ? <p className="text-[13px] font-semibold text-brand">{l.offer}</p> : null}
                 {!l.available ? (
                   <p className="text-[13px] font-semibold text-sale">No longer available — please remove it.</p>
                 ) : null}

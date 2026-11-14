@@ -2,6 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/lib/db";
 import { toPlain } from "@/lib/serialize";
+import { loadPromotions, offerAwareLife, priceFor, promotionWhere } from "@/lib/pricing";
 
 /**
  * Public catalogue queries. All cached on the server and tagged so admin
@@ -29,20 +30,26 @@ const cardSelect = {
   slug: true,
   name: true,
   gender: true,
+  brandId: true,
   basePrice: true,
   compareAtPrice: true,
   isFeatured: true,
   createdAt: true,
   images: { orderBy: { sortOrder: "asc" }, take: 6, select: { url: true, alt: true, color: true } },
-  categories: { select: { name: true, slug: true }, take: 1 },
+  categories: { select: { id: true, name: true, slug: true } },
   variants: { where: { isActive: true }, select: { colorHex: true, color: true, stock: true } },
 };
 
-/** Shape a product row into the minimal, client-safe card model. */
-function toCard(p) {
-  const price = Number(p.basePrice);
-  const compareAt = p.compareAtPrice ? Number(p.compareAtPrice) : null;
-  const onSale = compareAt && compareAt > price;
+/** Shape a product row into the minimal, client-safe card model, priced with live offers. */
+function toCard(p, promos) {
+  const priced = priceFor(
+    promos,
+    { id: p.id, brandId: p.brandId, categoryIds: p.categories.map((c) => c.id) },
+    p.basePrice,
+    p.compareAtPrice,
+  );
+  const { price, compareAt } = priced;
+  const onSale = compareAt != null;
   const colours = [...new Map(p.variants.map((v) => [v.color, v.colorHex])).entries()];
   return {
     id: p.id,
@@ -64,7 +71,8 @@ function toCard(p) {
 export async function getHomeCatalog() {
   "use cache";
   cacheTag(CATALOG_TAG);
-  cacheLife("hours");
+  const promos = await loadPromotions();
+  cacheLife(offerAwareLife(promos, 3600));
 
   const [featured, categories] = await Promise.all([
     db.product.findMany({
@@ -85,7 +93,7 @@ export async function getHomeCatalog() {
     }),
   ]);
 
-  const products = featured.map(toCard);
+  const products = featured.map((p) => toCard(p, promos.list));
   const maxDiscount = Math.max(
     0,
     ...products.filter((p) => p.compareAt).map((p) => Math.round(((p.compareAt - p.price) / p.compareAt) * 100)),
@@ -140,6 +148,7 @@ export function parseFilters(sp = {}) {
     category: clean(many(sp.category), /^[a-z0-9-]{1,140}$/),
     size: clean(many(sp.size), /^[0-9.]{1,4}$/),
     sale: one(sp.sale) === "1",
+    offer: /^[a-z0-9-]{1,140}$/.test(one(sp.offer) ?? "") ? one(sp.offer) : null,
     min: int(sp.min),
     max: int(sp.max),
     q: typeof one(sp.q) === "string" ? one(sp.q).trim().slice(0, 80) : "",
@@ -159,9 +168,12 @@ export const MAX_THROUGH_PAGES = 10;
 export async function listProducts(filters, mode = "page") {
   "use cache";
   cacheTag(CATALOG_TAG);
-  cacheLife("minutes");
+  const promos = await loadPromotions();
+  cacheLife(offerAwareLife(promos, 60));
 
-  const { gender, category, size, sale, min, max, q, sort, page } = filters;
+  const { gender, category, size, sale, offer, min, max, q, sort, page } = filters;
+  const onOffer = promotionWhere(promos.list);
+  const thisOffer = offer ? promos.list.find((p) => p.slug === offer) : null;
   const where = {
     status: "ACTIVE",
     deletedAt: null,
@@ -174,7 +186,11 @@ export async function listProducts(filters, mode = "page") {
       : {}),
     ...(category.length ? { categories: { some: { slug: { in: category } } } } : {}),
     ...(size.length ? { variants: { some: { size: { in: size }, stock: { gt: 0 }, isActive: true } } } : {}),
-    ...(sale ? { compareAtPrice: { not: null } } : {}),
+    AND: [
+      ...(sale ? [{ OR: [{ compareAtPrice: { not: null } }, ...(onOffer ? [onOffer] : [])] }] : []),
+      // An unknown or ended offer shows nothing rather than everything.
+      ...(offer ? [thisOffer ? promotionWhere([thisOffer]) : { id: "-" }] : []),
+    ],
     ...(min != null || max != null
       ? { basePrice: { ...(min != null ? { gte: min } : {}), ...(max != null ? { lte: max } : {}) } }
       : {}),
@@ -195,7 +211,13 @@ export async function listProducts(filters, mode = "page") {
       select: cardSelect,
     }),
   ]);
-  return { total, page: last, pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)), products: rows.map(toCard) };
+  return {
+    total,
+    page: last,
+    pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+    products: rows.map((p) => toCard(p, promos.list)),
+    offer: thisOffer ? { name: thisOffer.name, slug: thisOffer.slug, endsAt: thisOffer.endsAt } : null,
+  };
 }
 
 export async function getFacets() {
@@ -223,13 +245,14 @@ export async function getFacets() {
 export async function getProduct(slug) {
   "use cache";
   cacheTag(CATALOG_TAG, `product:${slug}`);
-  cacheLife("hours");
+  const promos = await loadPromotions();
+  cacheLife(offerAwareLife(promos, 3600));
 
   const p = await db.product.findFirst({
     where: { slug, status: "ACTIVE", deletedAt: null },
     include: {
       brand: { select: { name: true } },
-      categories: { select: { name: true, slug: true } },
+      categories: { select: { id: true, name: true, slug: true } },
       images: { orderBy: { sortOrder: "asc" } },
       variants: { where: { isActive: true }, orderBy: { size: "asc" } },
       sizeChart: { include: { entries: { orderBy: { sortOrder: "asc" } } } },
@@ -253,21 +276,21 @@ export async function getProduct(slug) {
   if (!p) return null;
 
   const plain = toPlain(p);
+  const who = { id: plain.id, brandId: plain.brandId, categoryIds: plain.categories.map((c) => c.id) };
+  const priced = priceFor(promos.list, who, plain.basePrice, plain.compareAtPrice);
   return {
     id: plain.id,
     slug: plain.slug,
     name: plain.name,
     gender: GENDER_LABEL[plain.gender],
-    category: plain.categories[0] ?? null,
+    category: plain.categories[0] ? { name: plain.categories[0].name, slug: plain.categories[0].slug } : null,
     brand: plain.brand?.name ?? null,
     shortDescription: plain.shortDescription,
     description: plain.description,
     material: plain.material,
-    price: Number(plain.basePrice),
-    compareAt:
-      plain.compareAtPrice && Number(plain.compareAtPrice) > Number(plain.basePrice)
-        ? Number(plain.compareAtPrice)
-        : null,
+    price: priced.price,
+    compareAt: priced.compareAt,
+    offer: priced.promotion,
     rating: { average: Number(plain.ratingAverage), count: plain.ratingCount },
     images: plain.images.map((i) => ({ url: i.url, alt: i.alt, color: i.color })),
     variants: plain.variants
@@ -278,7 +301,7 @@ export async function getProduct(slug) {
         colorHex: v.colorHex,
         size: v.size,
         stock: v.stock,
-        price: v.price ? Number(v.price) : null,
+        price: v.price ? priceFor(promos.list, who, v.price, v.compareAtPrice).price : null,
       }))
       .sort((a, b) => Number(a.size) - Number(b.size)),
     sizeChart: plain.sizeChart
@@ -302,7 +325,8 @@ export async function getProduct(slug) {
 export async function getRelatedProducts(slug, categorySlug) {
   "use cache";
   cacheTag(CATALOG_TAG);
-  cacheLife("hours");
+  const promos = await loadPromotions();
+  cacheLife(offerAwareLife(promos, 3600));
 
   const rows = await db.product.findMany({
     where: {
@@ -315,7 +339,7 @@ export async function getRelatedProducts(slug, categorySlug) {
     take: 4,
     select: cardSelect,
   });
-  return rows.map(toCard);
+  return rows.map((p) => toCard(p, promos.list));
 }
 
 export async function getSizeCharts() {
@@ -337,5 +361,20 @@ export async function getSizeCharts() {
       us,
       cm: footLengthCm == null ? null : Number(footLengthCm).toFixed(1),
     })),
+  }));
+}
+
+/** Offers running right now, for the storefront Offers page. */
+export async function getLiveOffers() {
+  "use cache";
+  cacheTag(CATALOG_TAG);
+  const promos = await loadPromotions();
+  cacheLife(offerAwareLife(promos, 3600));
+  return promos.list.map((p) => ({
+    name: p.name,
+    slug: p.slug,
+    description: p.description,
+    endsAt: p.endsAt,
+    label: p.type === "PERCENTAGE" ? `${p.value}% off` : `Rs ${p.value.toLocaleString("en-PK")} off`,
   }));
 }

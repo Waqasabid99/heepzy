@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { loadPromotions, priceFor } from "@/lib/pricing";
 import { CART_COOKIE, cartCookieOptions, createCartToken, verifyCartCookie } from "@/lib/cart-token";
 
 export const MAX_LINE_QTY = 10;
@@ -15,6 +16,7 @@ const itemInclude = {
       color: true,
       stock: true,
       price: true,
+      compareAtPrice: true,
       isActive: true,
       product: {
         select: {
@@ -58,9 +60,17 @@ async function findCart() {
 /** Client-safe cart view model with computed totals. */
 export async function getCart() {
   const cart = await findCart();
+  // Live offers, uncached: the bag and checkout always charge the current price.
+  const promos = cart?.items.length ? (await loadPromotions()).list : [];
   const lines = (cart?.items ?? []).map((i) => {
     const v = i.variant;
-    const unit = Number(v.price ?? v.product.basePrice);
+    const priced = priceFor(
+      promos,
+      { id: v.product.id, brandId: v.product.brandId, categoryIds: v.product.categories.map((c) => c.id) },
+      v.price ?? v.product.basePrice,
+      v.price ? v.compareAtPrice : v.product.compareAtPrice,
+    );
+    const unit = priced.price;
     const available = v.isActive && v.product.status === "ACTIVE" && v.stock > 0;
     return {
       id: i.id,
@@ -76,7 +86,8 @@ export async function getCart() {
       color: v.color,
       image: v.product.images[0] ?? null,
       unitPrice: unit,
-      compareAt: v.product.compareAtPrice ? Number(v.product.compareAtPrice) : null,
+      compareAt: priced.compareAt,
+      offer: priced.promotion?.name ?? null,
       quantity: i.quantity,
       maxQty: Math.min(MAX_LINE_QTY, v.stock),
       available,

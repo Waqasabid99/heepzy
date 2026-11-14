@@ -24,7 +24,12 @@ export const PAYMENT_STATUS_LABELS = {
   PARTIALLY_REFUNDED: "Partly refunded",
   REFUNDED: "Refunded",
 };
-export const PAYMENT_METHOD_LABELS = { COD: "Cash on delivery", CARD: "Card / wallet (Safepay)", WALLET: "Wallet" };
+export const PAYMENT_METHOD_LABELS = {
+  COD: "Cash on delivery",
+  CARD: "Card / wallet (Safepay)",
+  WALLET: "Wallet",
+  MANUAL: "Paid offline",
+};
 
 /**
  * Confirm a Safepay payment by asking Safepay for the tracker's real state.
@@ -167,5 +172,132 @@ export async function cancelOrderAndRestock(orderId, { actorId = null, note } = 
       data: { orderId, status: "CANCELLED", note: note ?? "Order cancelled", actorId },
     });
     return true;
+  });
+}
+
+/**
+ * Create an order in one transaction: order + items + history + payment,
+ * atomic stock reservation (SALE movements), voucher redemption, and
+ * optionally clearing a cart. Shared by checkout and admin-created orders.
+ *
+ * Throws Error("OUT_OF_STOCK:<item>") or Error("COUPON_USED"); callers turn
+ * those into messages. Returns { id }.
+ */
+export async function createOrder({
+  orderNumber,
+  accessHash,
+  userId = null,
+  email,
+  phone,
+  ship,
+  lines,
+  q,
+  paymentMethod,
+  orderStatus = "PENDING",
+  paymentStatus,
+  payment,
+  customerNote = null,
+  adminNote = null,
+  historyNote = "Order placed",
+  actorId = null,
+  ipAddress = null,
+  clearCartId = null,
+}) {
+  const now = new Date();
+  return db.$transaction(async (tx) => {
+    const order = await tx.order.create({
+      data: {
+        orderNumber,
+        userId,
+        email,
+        phone,
+        status: orderStatus,
+        paymentStatus,
+        paymentMethod,
+        subtotal: q.subtotal.toFixed(2),
+        discountTotal: q.discount.toFixed(2),
+        shippingTotal: q.shipping.toFixed(2),
+        taxTotal: q.taxTotal.toFixed(2),
+        codFee: q.codFee.toFixed(2),
+        grandTotal: q.grandTotal.toFixed(2),
+        couponCode: q.coupon?.code ?? null,
+        deliveryRateName: q.rate ? `${q.rate.name}${q.rate.zone ? ` (${q.rate.zone})` : ""}` : null,
+        shipFullName: ship.fullName,
+        shipPhone: ship.phone,
+        shipLine1: ship.line1,
+        shipLine2: ship.line2 || null,
+        shipCity: ship.city,
+        shipProvince: ship.province,
+        shipPostalCode: ship.postalCode || null,
+        customerNote,
+        adminNote,
+        accessTokenHash: accessHash,
+        ipAddress,
+        ...(orderStatus === "CONFIRMED" ? { confirmedAt: now } : {}),
+        items: {
+          create: lines.map((l) => ({
+            productId: l.productId,
+            variantId: l.variantId,
+            productName: l.name,
+            sku: l.sku,
+            color: l.color,
+            size: l.size,
+            imageUrl: l.image?.url ?? null,
+            unitPrice: l.unitPrice.toFixed(2),
+            quantity: l.quantity,
+            lineTotal: l.lineTotal.toFixed(2),
+          })),
+        },
+        statusHistory: { create: { status: orderStatus, note: historyNote, actorId } },
+        payments: {
+          create: {
+            provider: payment.provider,
+            method: paymentMethod,
+            amount: q.grandTotal.toFixed(2),
+            status: payment.status,
+            merchantRef: `${orderNumber}-1`,
+            providerPaymentId: payment.providerPaymentId ?? null,
+            ...(payment.providerResponse ? { providerResponse: payment.providerResponse } : {}),
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    // Reserve stock atomically; fails if someone else bought the last pair.
+    for (const l of lines) {
+      const res = await tx.productVariant.updateMany({
+        where: { id: l.variantId, isActive: true, stock: { gte: l.quantity } },
+        data: { stock: { decrement: l.quantity } },
+      });
+      if (res.count === 0) throw new Error(`OUT_OF_STOCK:${l.name} (${l.color}, ${l.size})`);
+      const v = await tx.productVariant.findUnique({ where: { id: l.variantId }, select: { stock: true } });
+      await tx.inventoryMovement.create({
+        data: {
+          variantId: l.variantId,
+          change: -l.quantity,
+          stockAfter: v.stock,
+          reason: "SALE",
+          orderId: order.id,
+          actorId,
+          note: `Order ${orderNumber}`,
+        },
+      });
+    }
+
+    if (q.coupon) {
+      const coupon = await tx.coupon.findUnique({ where: { code: q.coupon.code }, select: { id: true } });
+      const res = await tx.coupon.updateMany({
+        where: { id: coupon.id, OR: [{ usageLimit: null }, { usedCount: { lt: db.coupon.fields.usageLimit } }] },
+        data: { usedCount: { increment: 1 } },
+      });
+      if (res.count === 0) throw new Error("COUPON_USED");
+      await tx.couponRedemption.create({
+        data: { couponId: coupon.id, orderId: order.id, userId, email, amount: q.couponDiscount.toFixed(2) },
+      });
+    }
+
+    if (clearCartId) await tx.cartItem.deleteMany({ where: { cartId: clearCartId } });
+    return order;
   });
 }

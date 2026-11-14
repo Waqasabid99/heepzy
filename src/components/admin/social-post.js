@@ -4,33 +4,107 @@ import { useId, useRef, useState } from "react";
 import { buildCaption, SOCIAL_FORMATS, SOCIAL_STYLES } from "@/lib/social";
 import { Check, Close, ExternalLink, Sparkle, Upload } from "@/components/ui/icons";
 
+/** Preset post colours: brand, festive and wedding-season favourites. */
+const SWATCHES = [
+  ["#D3122A", "Crimson"],
+  ["#7A0E1E", "Maroon"],
+  ["#F2A900", "Saffron"],
+  ["#0B7A55", "Emerald"],
+  ["#1D3F8F", "Royal blue"],
+  ["#111111", "Black"],
+  ["#F6D6D9", "Blush pink"],
+  ["#F4EDE1", "Ivory"],
+];
+
 /**
- * "Create social post": renders a branded image (see
- * /admin/products/[id]/social-image) plus a ready caption, with download,
- * copy and share actions for Instagram / Facebook.
+ * "Create social post" for a product: a branded image (see
+ * /admin/products/[id]/social-image) plus a ready caption.
  */
 export function SocialPost({ productId, summary, images, settings, productUrl, dirty }) {
+  const firstStyle = summary.compareAt ? "sale" : "new";
+  return (
+    <SocialPostDialog
+      title="Social media post"
+      subtitle={`For Instagram and Facebook. Uses the saved product${dirty ? " (save your changes first to include them)" : ""}.`}
+      disabled={!images.length}
+      disabledHint="Add a photo first."
+      styles={SOCIAL_STYLES}
+      defaultStyle={firstStyle}
+      photos={images.map((img, i) => ({ url: img.url, name: `Photo ${i + 1}` }))}
+      imageSrc={(q) => `/admin/products/${productId}/social-image?${q}`}
+      caption={({ style, platform }) => buildCaption({ product: summary, settings, style, platform, url: productUrl })}
+      shareUrl={productUrl}
+      fileBase={summary.slug}
+      previewName={summary.name}
+      styleHint={(style) =>
+        style === "sale" && !summary.compareAt
+          ? "Tip: set an original price on the product to show the discount."
+          : null
+      }
+    />
+  );
+}
+
+/**
+ * Generic social post dialog: live image preview with size / look / photo /
+ * headline controls, an editable caption per platform, and download, copy
+ * and share actions. Used for products, vouchers and offers.
+ *
+ * - styles: { key: { label, headline } }
+ * - photos: [{ url, name }]; `allowNoPhoto` adds a "No photo" choice (image=-1)
+ * - imageSrc(queryString) → image URL; caption({ style, platform }) → text
+ */
+export function SocialPostDialog({
+  title,
+  subtitle,
+  disabled = false,
+  disabledHint,
+  styles,
+  defaultStyle,
+  photos,
+  allowNoPhoto = false,
+  imageSrc,
+  caption: makeCaption,
+  shareUrl,
+  fileBase,
+  previewName,
+  styleHint,
+}) {
   const uid = useId();
   const dialogRef = useRef(null);
   const [format, setFormat] = useState("square");
-  const [style, setStyle] = useState(summary.compareAt ? "sale" : "new");
-  const [imageIndex, setImageIndex] = useState(0);
+  const [style, setStyle] = useState(defaultStyle);
+  const [imageIndex, setImageIndex] = useState(photos.length ? 0 : -1);
+  // null = the style's own colour; otherwise a "#rrggbb" background.
+  const [color, setColor] = useState(null);
+  // The native picker fires on every drag; re-render the image once the admin pauses.
+  const colorTimer = useRef(null);
+  const pickCustom = (value) => {
+    clearTimeout(colorTimer.current);
+    colorTimer.current = setTimeout(() => {
+      setColor(value.toUpperCase());
+    }, 400);
+  };
   // `headline` drives the image; `draft` is what's being typed (applied on blur / Enter).
-  const [headline, setHeadline] = useState(SOCIAL_STYLES[summary.compareAt ? "sale" : "new"].headline);
+  const [headline, setHeadline] = useState(styles[defaultStyle].headline);
   const [draft, setDraft] = useState(headline);
   const [platform, setPlatform] = useState("instagram");
   const [captionEdit, setCaptionEdit] = useState(null);
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  // Which image URL has finished loading / failed. "Loading" is derived, so it can never get stuck.
+  const [loadedSrc, setLoadedSrc] = useState(null);
+  const [failedSrc, setFailedSrc] = useState(null);
   // Only render (and fetch) the preview while the dialog is open.
   const [open, setOpen] = useState(false);
 
-  const autoCaption = buildCaption({ product: summary, settings, style, platform, url: productUrl });
-  const caption = captionEdit ?? autoCaption;
+  const caption = captionEdit ?? makeCaption({ style, platform });
   const params = new URLSearchParams({ format, style, image: String(imageIndex), headline });
-  const src = `/admin/products/${productId}/social-image?${params}`;
-  const fileName = `${summary.slug}-${format}-${style}.png`;
+  if (color) params.set("color", color);
+  const src = imageSrc(params.toString());
+  const loaded = loadedSrc === src;
+  const failed = failedSrc === src;
+  const fileName = `${fileBase}-${format}-${style}.png`;
 
   const say = (text) => {
     setNotice(text);
@@ -38,9 +112,8 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
   };
   const pickStyle = (s) => {
     setStyle(s);
-    setHeadline(SOCIAL_STYLES[s].headline);
-    setDraft(SOCIAL_STYLES[s].headline);
-    setLoaded(false);
+    setHeadline(styles[s].headline);
+    setDraft(styles[s].headline);
   };
   async function getBlob() {
     const res = await fetch(src);
@@ -99,16 +172,15 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
       <button
         type="button"
         onClick={() => {
-          setLoaded(false);
           setOpen(true);
           dialogRef.current?.showModal();
         }}
-        disabled={!images.length}
+        disabled={disabled}
         className="btn-outline min-h-11 w-full"
       >
         <Sparkle className="size-4" /> Create social post
       </button>
-      {!images.length ? <p className="mt-2 text-[13px] text-fg-muted">Add a photo first.</p> : null}
+      {disabled && disabledHint ? <p className="mt-2 text-[13px] text-fg-muted">{disabledHint}</p> : null}
 
       <dialog
         ref={dialogRef}
@@ -123,12 +195,9 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
         <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-6">
           <div>
             <h2 id={`${uid}-title`} className="font-display text-2xl font-semibold uppercase">
-              Social media post
+              {title}
             </h2>
-            <p className="text-[13px] text-fg-muted">
-              For Instagram and Facebook. Uses the saved product
-              {dirty ? " (save your changes first to include them)" : ""}.
-            </p>
+            <p className="text-[13px] text-fg-muted">{subtitle}</p>
           </div>
           <button
             type="button"
@@ -156,15 +225,16 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
                   <img
                     key={src}
                     src={src}
-                    alt={`Preview of the ${SOCIAL_FORMATS[format].label.toLowerCase()} for ${summary.name}`}
-                    onLoad={() => setLoaded(true)}
+                    alt={`Preview of the ${SOCIAL_FORMATS[format].label.toLowerCase()} for ${previewName}`}
+                    onLoad={() => setLoadedSrc(src)}
+                    onError={() => setFailedSrc(src)}
                     className={`size-full object-contain transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
                   />
                 </>
               ) : null}
               {!loaded ? (
                 <p role="status" className="absolute inset-0 grid place-items-center text-sm text-fg-muted">
-                  Creating image…
+                  {failed ? "Couldn't create the image. Try another option." : "Creating image…"}
                 </p>
               ) : null}
             </div>
@@ -187,7 +257,6 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
                       checked={format === key}
                       onChange={() => {
                         setFormat(key);
-                        setLoaded(false);
                       }}
                     />
                     {f.label}
@@ -199,7 +268,7 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
             <fieldset>
               <legend className={label}>Style</legend>
               <div className="flex flex-wrap gap-2">
-                {Object.entries(SOCIAL_STYLES).map(([key, s]) => (
+                {Object.entries(styles).map(([key, s]) => (
                   <label key={key} className={radio}>
                     <input
                       type="radio"
@@ -212,20 +281,69 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
                   </label>
                 ))}
               </div>
-              {style === "sale" && !summary.compareAt ? (
-                <p className="mt-1.5 text-[13px] text-fg-muted">
-                  Tip: set an original price on the product to show the discount.
-                </p>
-              ) : null}
+              {styleHint?.(style) ? <p className="mt-1.5 text-[13px] text-fg-muted">{styleHint(style)}</p> : null}
             </fieldset>
 
-            {images.length > 1 ? (
+            <fieldset>
+              <legend className={label}>Colour</legend>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className={radio}>
+                  <input
+                    type="radio"
+                    name={`${uid}-color`}
+                    className="sr-only"
+                    checked={color === null}
+                    onChange={() => {
+                      setColor(null);
+                    }}
+                  />
+                  Style colour
+                </label>
+                {SWATCHES.map(([hex, name]) => (
+                  <label
+                    key={hex}
+                    title={name}
+                    className="grid size-10 cursor-pointer place-items-center rounded-full border-2 border-line has-checked:border-fg has-focus-visible:outline-2 has-focus-visible:outline-ring"
+                  >
+                    <input
+                      type="radio"
+                      name={`${uid}-color`}
+                      className="sr-only"
+                      checked={color === hex}
+                      onChange={() => {
+                        setColor(hex);
+                      }}
+                    />
+                    <span className="sr-only">{name}</span>
+                    <span aria-hidden="true" className="size-7 rounded-full" style={{ background: hex }} />
+                  </label>
+                ))}
+                <label className={`${radio} gap-2`}>
+                  <span
+                    aria-hidden="true"
+                    className="size-5 rounded-full border border-line"
+                    style={{ background: color ?? "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)" }}
+                  />
+                  Custom
+                  <input
+                    type="color"
+                    value={color ?? "#D3122A"}
+                    onChange={(e) => pickCustom(e.target.value)}
+                    className="sr-only"
+                    aria-label="Custom colour"
+                  />
+                </label>
+              </div>
+            </fieldset>
+
+            {photos.length > 1 || (allowNoPhoto && photos.length) ? (
               <fieldset>
                 <legend className={label}>Photo</legend>
                 <div className="flex flex-wrap gap-2">
-                  {images.map((img, i) => (
+                  {photos.map((img, i) => (
                     <label
                       key={img.url}
+                      title={img.name}
                       className="relative size-16 cursor-pointer overflow-hidden border-2 border-transparent bg-muted has-checked:border-accent has-focus-visible:outline-2 has-focus-visible:outline-ring"
                     >
                       <input
@@ -235,14 +353,27 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
                         checked={imageIndex === i}
                         onChange={() => {
                           setImageIndex(i);
-                          setLoaded(false);
                         }}
                       />
-                      <span className="sr-only">Photo {i + 1}</span>
+                      <span className="sr-only">{img.name}</span>
                       {/* eslint-disable-next-line @next/next/no-img-element -- tiny thumbnail */}
                       <img src={img.url} alt="" className="size-full object-cover" />
                     </label>
                   ))}
+                  {allowNoPhoto ? (
+                    <label className="grid size-16 cursor-pointer place-items-center border-2 border-line bg-muted text-center text-[11px] font-bold has-checked:border-accent has-focus-visible:outline-2 has-focus-visible:outline-ring">
+                      <input
+                        type="radio"
+                        name={`${uid}-img`}
+                        className="sr-only"
+                        checked={imageIndex === -1}
+                        onChange={() => {
+                          setImageIndex(-1);
+                        }}
+                      />
+                      No photo
+                    </label>
+                  ) : null}
                 </div>
               </fieldset>
             ) : null}
@@ -258,7 +389,6 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
                 onBlur={() => {
                   if (draft !== headline) {
                     setHeadline(draft);
-                    setLoaded(false);
                   }
                 }}
                 onKeyDown={(e) => {
@@ -331,7 +461,7 @@ export function SocialPost({ productId, summary, images, settings, productUrl, d
               Copy caption
             </button>
             <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`}
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-ghost min-h-11 border border-line"
