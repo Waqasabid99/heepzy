@@ -30,8 +30,15 @@ const schema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   MAIL_FROM: z.string().optional(),
-  // Where uploaded images are written (served by /media/*). Keep it outside the build output.
+  // Where uploaded images go. "auto" = Vercel Blob when BLOB_READ_WRITE_TOKEN is set, otherwise local disk.
+  STORAGE_DRIVER: z.enum(["auto", "disk", "blob"]).default("auto"),
+  // Local disk (served by /media/*). Keep it outside the build output.
   UPLOAD_DIR: z.string().default("storage/uploads"),
+  // Vercel Blob (Storage tab in the Vercel project; the token is added for you).
+  BLOB_READ_WRITE_TOKEN: z.preprocess((v) => v || undefined, z.string().optional()),
+  // "true" = connect to the database over TLS (TiDB Cloud and most hosted MySQL need it).
+  // A `?ssl=true` or `?sslaccept=strict` on DATABASE_URL has the same effect.
+  DATABASE_SSL: z.preprocess((v) => v || undefined, z.enum(["true", "false"]).optional()),
 });
 
 const parsed = schema.safeParse(process.env);

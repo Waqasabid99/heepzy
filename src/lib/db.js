@@ -3,6 +3,11 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/prisma";
 import { env, isProd } from "@/lib/env";
 
+function wantsTls(url) {
+  if (env.DATABASE_SSL) return env.DATABASE_SSL === "true";
+  return url.searchParams.get("ssl") === "true" || Boolean(url.searchParams.get("sslaccept"));
+}
+
 function createClient() {
   const url = new URL(env.DATABASE_URL);
   const adapter = new PrismaMariaDb({
@@ -13,6 +18,8 @@ function createClient() {
     database: url.pathname.slice(1),
     connectionLimit: env.DATABASE_POOL_SIZE,
     allowPublicKeyRetrieval: url.searchParams.get("allowPublicKeyRetrieval") === "true",
+    // Hosted databases (TiDB Cloud, PlanetScale…) require TLS; local Docker doesn't.
+    ...(wantsTls(url) ? { ssl: { rejectUnauthorized: true } } : {}),
     timezone: "Z",
   });
 

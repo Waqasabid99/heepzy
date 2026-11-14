@@ -3,7 +3,8 @@ import { stat } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { getCurrentUser } from "@/lib/session";
 import { isStaff } from "@/lib/roles";
-import { isMediaName, mediaPath, VIDEO_TYPES } from "@/lib/return-media";
+import { findBlob, isMediaName, mediaPath, VIDEO_TYPES } from "@/lib/return-media";
+import { usingBlob } from "@/lib/storage";
 
 /**
  * GET /api/returns/media/<orderId>/<name> — a customer's return photo/video.
@@ -14,6 +15,22 @@ export async function GET(request, { params }) {
   if (!user || !isStaff(user.role)) return new Response("Forbidden", { status: 403 });
   const { orderId, name } = await params;
   if (!isMediaName(name)) return new Response("Not found", { status: 404 });
+
+  if (usingBlob()) {
+    // Photos live in Vercel Blob; only staff reach this route, so we fetch and relay them.
+    const blob = await findBlob(orderId, name);
+    if (!blob) return new Response("Not found", { status: 404 });
+    const upstream = await fetch(blob.url);
+    if (!upstream.ok) return new Response("Not found", { status: 404 });
+    return new Response(upstream.body, {
+      headers: {
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "private, max-age=3600",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Disposition": "inline",
+      },
+    });
+  }
 
   let file;
   let size;

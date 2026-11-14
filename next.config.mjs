@@ -56,8 +56,8 @@ const nextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
-    // Add your CDN / media host here when product images move off the app server.
-    remotePatterns: [],
+    // Vercel Blob (STORAGE_DRIVER=blob) serves uploads from *.public.blob.vercel-storage.com.
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
   },
   turbopack: {
     rules: {

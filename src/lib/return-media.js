@@ -5,6 +5,7 @@ import { mkdir, open, readdir, rename, stat, unlink, writeFile } from "node:fs/p
 import path from "node:path";
 import sharp from "sharp";
 import { uploadRoot } from "@/lib/uploads";
+import { listBlobs, putBlob, usingBlob } from "@/lib/storage";
 
 /**
  * Photos and videos customers attach to a return (e.g. an unboxing video of a
@@ -38,7 +39,23 @@ export function mediaPath(orderId, name) {
 }
 const newName = (ext) => `${Date.now().toString(36)}-${randomBytes(6).toString("hex")}.${ext}`;
 
+// On Vercel Blob: photos only, small enough for a serverless request body (4.5 MB limit).
+export const MAX_BLOB_PHOTO_BYTES = 4 * 1024 * 1024;
+const blobPrefix = (orderId) => `returns/${orderId}/`;
+async function blobNames(orderId) {
+  dirFor(orderId); // validates the id
+  return (await listBlobs(blobPrefix(orderId))).map((b) => b.pathname.slice(blobPrefix(orderId).length));
+}
+/** The stored blob (url, size) for a return file, or null. */
+export async function findBlob(orderId, name) {
+  if (!isMediaName(name)) return null;
+  dirFor(orderId);
+  const hit = (await listBlobs(`${blobPrefix(orderId)}${name}`)).find((b) => b.pathname === `${blobPrefix(orderId)}${name}`);
+  return hit ?? null;
+}
+
 export async function countMedia(orderId) {
+  if (usingBlob()) return (await blobNames(orderId)).filter((n) => NAME.test(n)).length;
   try {
     return (await readdir(dirFor(orderId))).filter((n) => NAME.test(n)).length;
   } catch {
@@ -48,6 +65,10 @@ export async function countMedia(orderId) {
 
 /** Do these names exist for this order? Returns the valid ones. */
 export async function existingMedia(orderId, names) {
+  if (usingBlob()) {
+    const have = new Set(await blobNames(orderId));
+    return names.filter((n) => isMediaName(n) && have.has(n));
+  }
   const out = [];
   for (const n of names) {
     if (!isMediaName(n)) continue;
@@ -113,7 +134,41 @@ function videoExt(sig) {
  * declared type); the bytes decide whether it's accepted.
  * Returns { name, kind } or { error } (customer-facing message).
  */
+async function saveReturnMediaToBlob(orderId, stream, kind) {
+  if (kind === "video") return { error: "Video upload isn't available here. Please add photos instead." };
+  const chunks = [];
+  let size = 0;
+  const reader = stream.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BLOB_PHOTO_BYTES) {
+      await reader.cancel();
+      return { error: "Photos must be 4 MB or smaller." };
+    }
+    chunks.push(value);
+  }
+  if (!size) return { error: "That file is empty." };
+  let data;
+  try {
+    data = await sharp(Buffer.concat(chunks), { limitInputPixels: 60_000_000 })
+      .rotate()
+      .resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true })
+      .flatten({ background: "#ffffff" })
+      .jpeg({ quality: 82, mozjpeg: true })
+      .toBuffer();
+  } catch {
+    return { error: "That photo couldn't be read. Please upload a JPG or PNG." };
+  }
+  dirFor(orderId);
+  const name = newName("jpg");
+  await putBlob(`${blobPrefix(orderId)}${name}`, data, "image/jpeg");
+  return { name, kind: "image" };
+}
+
 export async function saveReturnMedia(orderId, stream, kind) {
+  if (usingBlob()) return saveReturnMediaToBlob(orderId, stream, kind);
   const dir = dirFor(orderId);
   const max = kind === "video" ? MAX_VIDEO_BYTES : MAX_PHOTO_BYTES;
   const res = await streamToTemp(stream, dir, max);

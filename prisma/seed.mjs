@@ -22,6 +22,11 @@ const db = new PrismaClient({
     database: url.pathname.slice(1),
     connectionLimit: 2,
     allowPublicKeyRetrieval: url.searchParams.get("allowPublicKeyRetrieval") === "true",
+    ...(process.env.DATABASE_SSL === "true" ||
+    url.searchParams.get("ssl") === "true" ||
+    url.searchParams.get("sslaccept")
+      ? { ssl: { rejectUnauthorized: true } }
+      : {}),
   }),
 });
 
@@ -239,20 +244,6 @@ const PRODUCTS = [
     "Grippy, stable trainer for the gym and the court.",
   ],
   [
-    "marlow-derby",
-    "Marlow Derby",
-    "MEN",
-    "formal",
-    12499,
-    null,
-    "Cognac",
-    "#8B4A23",
-    "men",
-    "Full-grain leather",
-    true,
-    "Hand-finished derby in burnished cognac leather.",
-  ],
-  [
     "ravi-double-monk",
     "Ravi Double Monk",
     "MEN",
@@ -265,62 +256,6 @@ const PRODUCTS = [
     "Calf leather",
     false,
     "A sharp double-monk strap for weddings and boardrooms.",
-  ],
-  [
-    "heritage-oxford",
-    "Heritage Oxford",
-    "MEN",
-    "formal",
-    11999,
-    14999,
-    "Tan",
-    "#9A5B2E",
-    "men",
-    "Polished calf",
-    false,
-    "The classic oxford, cut from polished calf leather.",
-  ],
-  [
-    "saba-pump",
-    "Saba Pump",
-    "WOMEN",
-    "heels",
-    7299,
-    null,
-    "Midnight",
-    "#1F2A44",
-    "women",
-    "Suede",
-    true,
-    "A refined almond-toe pump on a slim 85mm heel.",
-  ],
-  [
-    "noor-stiletto",
-    "Noor Stiletto",
-    "WOMEN",
-    "heels",
-    7999,
-    null,
-    "Noir",
-    "#111111",
-    "women",
-    "Patent leather",
-    false,
-    "Pointed patent stiletto for evenings that matter.",
-  ],
-  [
-    "kohsar-ankle-boot",
-    "Kohsar Ankle Boot",
-    "WOMEN",
-    "boots",
-    10499,
-    null,
-    "Caramel",
-    "#A0622D",
-    "women",
-    "Leather",
-    false,
-    "Block-heel ankle boot in soft caramel leather.",
   ],
   [
     "karakoram-work-boot",
@@ -540,7 +475,7 @@ async function seedCatalogue() {
         images: {
           create: [
             {
-              url: `/images/products/${IMAGE_FILE[slug] ?? slug}.jpg`,
+              url: `/images/products/${IMAGE_FILE[slug] ?? slug}.webp`,
               alt: `${name} in ${color}`,
               color,
               sortOrder: 0,
@@ -572,12 +507,23 @@ async function seedCatalogue() {
     await db.productImage.create({
       data: {
         productId: product.id,
-        url: `/images/products/${IMAGE_FILE[slug] ?? slug}-detail.jpg`,
+        url: `/images/products/${IMAGE_FILE[slug] ?? slug}-detail.webp`,
         alt: `${name} in ${color}, close-up detail`,
         color,
         sortOrder: 1,
       },
     });
+  }
+
+  // Databases seeded before the transparent cut-outs: point the demo photos at the new files.
+  for (const [slug] of PRODUCTS) {
+    const file = IMAGE_FILE[slug] ?? slug;
+    for (const suffix of ["", "-detail"]) {
+      await db.productImage.updateMany({
+        where: { product: { slug }, url: `/images/products/${file}${suffix}.jpg` },
+        data: { url: `/images/products/${file}${suffix}.webp` },
+      });
+    }
   }
   console.log("• Catalogue seeded");
 }

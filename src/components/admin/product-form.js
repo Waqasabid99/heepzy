@@ -855,7 +855,7 @@ export function ProductForm({ product, options, social }) {
               className="mt-1 grid w-full place-items-center gap-2 rounded-xl border-2 border-dashed border-line px-6 py-10 text-sm text-fg-muted hover:border-fg"
             >
               <Upload className="size-6" />
-              Click to upload JPG, PNG, WebP or AVIF (max 8 MB each)
+              Click to upload JPG, PNG, WebP or AVIF (max 4 MB each)
             </button>
           )}
         </section>

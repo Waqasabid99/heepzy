@@ -23,6 +23,7 @@
     "@prisma/adapter-mariadb": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@tailwindcss/turbopack": "4.3.3",
+    "@vercel/blob": "^2.9.0",
     "babel-plugin-react-compiler": "1.0.0",
     "better-auth": "^1.7.22",
     "dotenv": "^18.0.10",

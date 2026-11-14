@@ -68,12 +68,15 @@ function imagePath(url) {
  * centred on a blurred, enlarged copy of itself so there are no empty bars.
  */
 export async function photoDataUri(url, width, height, { fit = "cover" } = {}) {
-  const file = url && imagePath(url);
-  if (!file) return null;
+  const remote = url && /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//.test(url);
+  const file = url && !remote && imagePath(url);
+  if (!file && !remote) return null;
   const w = Math.round(width);
   const h = Math.round(height);
   try {
-    const input = await readFile(/* turbopackIgnore: true */ file);
+    const input = remote
+      ? Buffer.from(await (await fetch(url)).arrayBuffer())
+      : await readFile(/* turbopackIgnore: true */ file);
     let out;
     if (fit === "contain") {
       const [backdrop, fg] = await Promise.all([

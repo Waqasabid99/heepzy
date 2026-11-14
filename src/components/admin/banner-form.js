@@ -199,7 +199,7 @@ export function BannerForm({ banner, slot }) {
               <label htmlFor={`${uid}-file`} className="btn-outline min-h-11 cursor-pointer">
                 <Upload className="size-4" /> {uploading ? "Uploading…" : v.imageUrl ? "Replace photo" : "Upload photo"}
               </label>
-              <p className="text-xs text-fg-muted">JPG, PNG or WebP, up to 8 MB.</p>
+              <p className="text-xs text-fg-muted">JPG, PNG or WebP, up to 4 MB.</p>
               {uploadError ? <FieldError id={`${uid}-up-err`} text={uploadError} /> : null}
               {errors.imageUrl ? <FieldError id={`${uid}-img-err`} text={errors.imageUrl} /> : null}
             </div>
