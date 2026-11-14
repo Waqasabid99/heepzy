@@ -6,7 +6,8 @@ import { formatPKR } from "@/lib/money";
 import { CAMPAIGN } from "@/lib/campaign";
 import { getPerks } from "@/components/layout/announcement-bar";
 import { HomeProducts } from "@/components/store/home-products";
-import { Countdown } from "@/components/store/countdown";
+import { HomeHero, LargeTile, SplitTile } from "@/components/store/home-banners";
+import { getHomeBanners } from "@/lib/banners";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
 import { ArrowRight, Moon, Percent, ShieldCheck, Sparkle, Star } from "@/components/ui/icons";
 import saleHero from "../../../../public/images/campaign/mega-sale.jpg";
@@ -23,60 +24,73 @@ export const metadata = {
 
 const BUDGET = 5000;
 
+/** Shown when Admin → Banners has nothing live for a slot. */
+const DEFAULT_HERO = {
+  kicker: CAMPAIGN.kicker,
+  title: CAMPAIGN.title,
+  highlight: CAMPAIGN.highlight,
+  image: saleHero,
+  imageAlt: "",
+  href: "/products?gender=women&sale=1",
+  buttonLabel: "Shop women",
+  href2: "/products?gender=men&sale=1",
+  button2Label: "Shop men",
+  showCountdown: true,
+  endsAt: CAMPAIGN.endsAt,
+};
+const DEFAULT_TILES = [
+  {
+    href: "/products?gender=men&category=formal",
+    kicker: "Festive formals",
+    title: "Desi Drip",
+    subtitle: "Loafers, monks and derbies that finish off a shalwar kameez or sherwani.",
+    image: desiDrip,
+    imageAlt: "Young man in a black waistcoat and shalwar kameez",
+    buttonLabel: "Shop the edit",
+  },
+  {
+    href: "/products?category=khussa",
+    kicker: "Shaadi season",
+    title: "Mehndi to walima",
+    image: shaadi,
+    imageAlt: "Hennaed hands with red and gold bangles",
+    theme: "crimson",
+    Icon: Sparkle,
+    buttonLabel: "Shop khussa",
+  },
+  {
+    href: "#newsletter",
+    kicker: "Coming soon",
+    title: "Eid collection",
+    image: eid,
+    imageAlt: "A thin crescent moon in the night sky",
+    theme: "emerald",
+    Icon: Moon,
+    buttonLabel: "Get early access",
+  },
+];
+
 export default async function HomePage() {
-  const [{ products, categories, maxDiscount }, settings, reviews] = await Promise.all([
+  const [{ products, categories, maxDiscount }, settings, reviews, banners] = await Promise.all([
     getHomeCatalog(),
     getStoreSettings(),
     getHomeReviews(),
+    getHomeBanners(),
   ]);
+  const fromAdmin = (b) => b && { ...b, image: b.imageUrl };
+  const hero = fromAdmin(banners.HOME_HERO) ?? DEFAULT_HERO;
+  const tiles = [
+    fromAdmin(banners.HOME_TILE_1) ?? DEFAULT_TILES[0],
+    fromAdmin(banners.HOME_TILE_2) ?? DEFAULT_TILES[1],
+    fromAdmin(banners.HOME_TILE_3) ?? DEFAULT_TILES[2],
+  ];
   const perks = getPerks(settings);
   const newest = products.find((p) => p.image)?.image;
 
   return (
     <>
-      {/* ───────── Campaign hero ───────── */}
-      <section aria-labelledby="hero-title" className="relative isolate overflow-hidden bg-panel text-on-panel">
-        <Image
-          src={saleHero}
-          alt=""
-          fill
-          priority
-          placeholder="blur"
-          sizes="100vw"
-          className="-z-10 object-cover object-[70%_center]"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 -z-10 bg-linear-to-r from-panel/95 via-panel/70 to-panel/10 max-md:bg-panel/70"
-        />
-        <div className="container-page flex min-h-130 flex-col justify-center py-14 lg:min-h-150">
-          <p className="script text-[clamp(34px,4vw,50px)] text-saffron">{CAMPAIGN.kicker}</p>
-          <h1 id="hero-title" className="mt-2 display text-[clamp(72px,11vw,156px)] leading-[0.88]">
-            {CAMPAIGN.title} <span className="text-accent">{CAMPAIGN.highlight}</span>
-          </h1>
-          {maxDiscount > 0 ? (
-            <p className="mt-3 display text-[clamp(32px,4vw,58px)] font-medium">
-              Up to {maxDiscount}% off{" "}
-              <span className="align-middle text-[0.45em] tracking-[0.04em] text-on-panel-muted">selected styles</span>
-            </p>
-          ) : null}
-          <Countdown endsAt={CAMPAIGN.endsAt} className="mt-7" />
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/products?gender=women&sale=1"
-              className="btn min-h-13 bg-accent px-8 text-accent-fg hover:bg-accent-hover"
-            >
-              Shop women
-            </Link>
-            <Link
-              href="/products?gender=men&sale=1"
-              className="btn min-h-13 bg-on-panel px-8 text-panel hover:opacity-90"
-            >
-              Shop men
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ───────── Campaign hero (Admin → Banners, or the built-in campaign) ───────── */}
+      <HomeHero banner={hero} maxDiscount={maxDiscount} />
 
       {/* ───────── Category circles ───────── */}
       <section aria-label="Shop by category" className="container-page pt-9 pb-2">
@@ -188,58 +202,12 @@ export default async function HomePage() {
         </ScrollReveal>
       </section>
 
-      {/* ───────── Campaign tiles ───────── */}
+      {/* ───────── Campaign tiles (Admin → Banners, or the built-in tiles) ───────── */}
       <section aria-label="Collections" className="container-page grid gap-3 pt-16 sm:gap-4 lg:grid-cols-2 lg:pt-20">
-        <Link
-          href="/products?gender=men&category=formal"
-          className="group relative block min-h-115 overflow-hidden rounded-tile bg-panel text-on-panel lg:min-h-145"
-        >
-          <Image
-            src={desiDrip}
-            alt="Young man in a black waistcoat and shalwar kameez"
-            fill
-            placeholder="blur"
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-cover transition-transform duration-700 ease-out-soft group-hover:scale-[1.03]"
-          />
-          <span
-            aria-hidden="true"
-            className="absolute inset-x-0 bottom-0 h-3/4 bg-linear-to-t from-panel/90 to-transparent"
-          />
-          <span className="absolute inset-x-0 bottom-0 flex flex-col items-start gap-2 p-7 sm:p-9">
-            <span className="text-xs font-extrabold tracking-[0.14em] text-saffron uppercase">Festive formals</span>
-            <span className="display text-[clamp(44px,5vw,64px)]">Desi Drip</span>
-            <span className="max-w-sm text-on-panel-muted">
-              Loafers, monks and derbies that finish off a shalwar kameez or sherwani.
-            </span>
-            <span className="btn mt-2 bg-saffron px-7 text-saffron-fg">
-              Shop the edit <ArrowRight className="size-4" />
-            </span>
-          </span>
-        </Link>
+        <LargeTile banner={tiles[0]} />
         <div className="grid gap-3 sm:gap-4">
-          <SplitTile
-            href="/products?category=khussa"
-            kicker="Shaadi season"
-            title="Mehndi to walima"
-            image={shaadi}
-            alt="Hennaed hands with red and gold bangles"
-            tone="bg-accent text-accent-fg"
-            button="bg-surface text-brand"
-            Icon={Sparkle}
-            cta="Shop khussa"
-          />
-          <SplitTile
-            href="#newsletter"
-            kicker="Coming soon"
-            title="Eid collection"
-            image={eid}
-            alt="A thin crescent moon in the night sky"
-            tone="bg-emerald text-emerald-fg"
-            button="bg-surface text-fg"
-            Icon={Moon}
-            cta="Get early access"
-          />
+          <SplitTile banner={tiles[1]} />
+          <SplitTile banner={tiles[2]} />
         </div>
       </section>
 
@@ -311,33 +279,6 @@ function BlockLink({ href, kicker, title, sub, image, alt, tone, button }) {
         <span className="mt-1 text-sm font-bold">{sub}</span>
       </span>
       <span className={`btn absolute bottom-6 left-6 min-h-11 px-6 sm:bottom-7 sm:left-7 ${button}`}>Shop now</span>
-    </Link>
-  );
-}
-
-function SplitTile({ href, kicker, title, image, alt, tone, button, Icon, cta }) {
-  return (
-    <Link href={href} className={`group relative flex min-h-62.5 overflow-hidden rounded-tile ${tone}`}>
-      <span className="relative z-10 flex max-w-[60%] flex-col items-start justify-center gap-2 p-6 sm:max-w-[55%] sm:p-9">
-        <span className="flex items-center gap-2">
-          <Icon className="size-5" />
-          <span className="script text-[26px] whitespace-nowrap sm:text-[30px]">{kicker}</span>
-        </span>
-        <span className="display text-[clamp(34px,3.4vw,46px)]">{title}</span>
-        <span className={`btn mt-2 min-h-11 px-5 whitespace-nowrap sm:px-6 ${button}`}>
-          {cta} <ArrowRight className="size-4" />
-        </span>
-      </span>
-      <span className="absolute inset-y-0 right-0 w-[48%]">
-        <Image
-          src={image}
-          alt={alt}
-          fill
-          placeholder="blur"
-          sizes="(min-width: 1024px) 24vw, 48vw"
-          className="object-cover transition-transform duration-700 ease-out-soft group-hover:scale-[1.04]"
-        />
-      </span>
     </Link>
   );
 }

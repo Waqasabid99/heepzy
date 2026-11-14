@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { updateTag } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { rememberAddress } from "@/lib/addresses";
 import { env } from "@/lib/env";
 import { getCart } from "@/lib/cart";
 import { getStoreSettings } from "@/lib/settings";
@@ -214,6 +215,19 @@ export async function placeOrder(_prev, formData) {
     }
     if (msg === "COUPON_USED") return fail({ couponCode: "This voucher has just been fully used." });
     throw e;
+  }
+
+  // Signed-in customers get the address saved to their account for next time.
+  if (user) {
+    await rememberAddress(user.id, {
+      fullName: f.fullName,
+      phone: f.phone,
+      line1: f.line1,
+      line2: f.line2,
+      city: f.city,
+      province: f.province,
+      postalCode: f.postalCode,
+    }).catch((err) => console.error("[checkout] couldn't save address", err));
   }
 
   updateTag(CATALOG_TAG);

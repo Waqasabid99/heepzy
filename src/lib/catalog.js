@@ -266,6 +266,7 @@ export async function getProduct(slug) {
           title: true,
           body: true,
           fit: true,
+          adminReply: true,
           isVerifiedPurchase: true,
           createdAt: true,
           user: { select: { name: true } },

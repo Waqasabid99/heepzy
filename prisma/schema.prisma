@@ -915,20 +915,31 @@ model Refund {
 // Content & audit
 // ═════════════════════════════════════════════════════════════
 
+/// Home page hero and campaign tiles (Admin → Banners). Placement is the slot:
+/// HOME_HERO, HOME_TILE_1 (large), HOME_TILE_2, HOME_TILE_3. When a slot has
+/// no live banner the built-in design is shown.
 model Banner {
-  id        String    @id @default(cuid())
-  title     String    @db.VarChar(150)
-  subtitle  String?   @db.VarChar(255)
-  imageUrl  String    @db.VarChar(512)
-  imageAlt  String    @db.VarChar(200)
-  href      String?   @db.VarChar(512)
-  placement String    @default("HOME_HERO") @db.VarChar(40)
-  sortOrder Int       @default(0)
-  startsAt  DateTime?
-  endsAt    DateTime?
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  name          String    @default("") @db.VarChar(120) // admin-only label
+  kicker        String?   @db.VarChar(80)
+  title         String    @db.VarChar(150)
+  highlight     String?   @db.VarChar(60)
+  subtitle      String?   @db.VarChar(255)
+  imageUrl      String    @db.VarChar(512)
+  imageAlt      String    @db.VarChar(200)
+  href          String?   @db.VarChar(512)
+  buttonLabel   String?   @db.VarChar(40)
+  href2         String?   @db.VarChar(512)
+  button2Label  String?   @db.VarChar(40)
+  theme         String    @default("crimson") @db.VarChar(20)
+  showCountdown Boolean   @default(false)
+  placement     String    @default("HOME_HERO") @db.VarChar(40)
+  sortOrder     Int       @default(0)
+  startsAt      DateTime?
+  endsAt        DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([placement, isActive])
   @@map("banners")

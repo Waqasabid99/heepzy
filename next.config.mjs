@@ -50,7 +50,8 @@ const nextConfig = {
     // Enables forbidden() / unauthorized() in the auth Data Access Layer.
     authInterrupts: true,
     serverActions: {
-      bodySizeLimit: "2mb",
+      // Photo uploads go through server actions (images up to 8 MB, see src/lib/uploads.js).
+      bodySizeLimit: "9mb",
     },
   },
   images: {

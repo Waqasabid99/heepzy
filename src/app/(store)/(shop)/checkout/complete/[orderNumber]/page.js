@@ -6,8 +6,9 @@ import { getOrderForViewer, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_
 import { PROVINCES } from "@/lib/checkout";
 import { formatPKR } from "@/lib/money";
 import { RetryPayment } from "@/components/store/retry-payment";
-import { AlertCircle, Check, Clock, Exchange, Truck, Video } from "@/components/ui/icons";
+import { AlertCircle, Check, Clock, Exchange, Star, Truck, Video } from "@/components/ui/icons";
 import { getStoreSettings } from "@/lib/settings";
+import { db } from "@/lib/db";
 import {
   openReturnQuantities,
   RESOLUTION_LABELS,
@@ -41,6 +42,22 @@ async function OrderView({ params, searchParams }) {
     returnsForOrder(order.id),
   ]);
   const returnCheck = returnEligibility(order, settings, openQty);
+  // Signed-in customers can review what they've received.
+  const reviewable =
+    settings.reviewsEnabled && order.userId && (order.status === "DELIVERED" || order.status === "RETURNED")
+      ? new Map(
+          (
+            await db.product.findMany({
+              where: {
+                id: { in: order.items.map((i) => i.productId).filter(Boolean) },
+                status: "ACTIVE",
+                deletedAt: null,
+              },
+              select: { id: true, slug: true },
+            })
+          ).map((p) => [p.id, p.slug]),
+        )
+      : new Map();
   const returnHref = `/returns/new?order=${order.orderNumber}${token ? `&t=${encodeURIComponent(token)}` : ""}`;
   const isCard = order.paymentMethod === "CARD";
   const paid = order.paymentStatus === "PAID";
@@ -202,6 +219,14 @@ async function OrderView({ params, searchParams }) {
                   <span className="block text-fg-muted">
                     {it.color} · Size {it.size} · Qty {it.quantity}
                   </span>
+                  {reviewable.has(it.productId) ? (
+                    <Link
+                      href={`/reviews/new?product=${encodeURIComponent(reviewable.get(it.productId))}`}
+                      className="mt-1 inline-flex min-h-8 items-center gap-1 font-semibold link-underline"
+                    >
+                      <Star className="size-3.5" filled={false} /> Write a review
+                    </Link>
+                  ) : null}
                 </span>
                 <span className="text-sm font-semibold">{formatPKR(it.lineTotal)}</span>
               </li>

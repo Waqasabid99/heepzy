@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE `banners` ADD COLUMN `button2Label` VARCHAR(40) NULL,
+    ADD COLUMN `buttonLabel` VARCHAR(40) NULL,
+    ADD COLUMN `highlight` VARCHAR(60) NULL,
+    ADD COLUMN `href2` VARCHAR(512) NULL,
+    ADD COLUMN `kicker` VARCHAR(80) NULL,
+    ADD COLUMN `name` VARCHAR(120) NOT NULL DEFAULT '',
+    ADD COLUMN `showCountdown` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `theme` VARCHAR(20) NOT NULL DEFAULT 'crimson';

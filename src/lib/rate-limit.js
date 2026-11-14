@@ -40,6 +40,7 @@ export const LIMITS = {
   returnRequest: { limit: 5, windowSec: 60 * 60 },
   returnMedia: { limit: 30, windowSec: 60 * 60 },
   paymentKeys: { limit: 10, windowSec: 15 * 60 },
+  changePassword: { limit: 8, windowSec: 15 * 60 },
   guestOrderLookup: { limit: 10, windowSec: 15 * 60 },
   newsletter: { limit: 5, windowSec: 60 * 60 },
   contact: { limit: 5, windowSec: 60 * 60 },

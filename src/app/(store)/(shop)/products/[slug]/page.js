@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProduct, getRelatedProducts } from "@/lib/catalog";
 import { getStoreSettings } from "@/lib/settings";
+import { FIT_LABELS } from "@/lib/review-labels";
 import { formatPKR } from "@/lib/money";
 import { BuyBox } from "@/components/store/buy-box";
 import { ProductCard } from "@/components/store/product-card";
@@ -139,11 +140,11 @@ async function ProductDetails({ params }) {
                     {product.offer.endsAt ? ` · ends ${offerEnds.format(new Date(product.offer.endsAt))}` : ""}
                   </Link>
                 ) : null}
-                {product.rating.count > 0 ? (
+                {settings.reviewsEnabled && product.rating.count > 0 ? (
                   <a href="#reviews" className="inline-flex items-center gap-1 text-[13px] link-underline">
                     {product.rating.average.toFixed(1)}
                     <Star className="size-3.5 text-saffron" />
-                    <span aria-hidden="true">·</span> {product.rating.count} reviews
+                    <span aria-hidden="true">·</span> {product.rating.count} {product.rating.count === 1 ? "review" : "reviews"}
                   </a>
                 ) : null}
                 <p className="text-xs text-fg-muted">
@@ -240,41 +241,52 @@ async function ProductDetails({ params }) {
       </div>
 
       {/* Reviews */}
-      <section id="reviews" aria-labelledby="rev-title" className="mt-28 grid gap-10 lg:grid-cols-[1fr_2fr]">
-        <div className="flex flex-col gap-4">
-          <h2 id="rev-title" className="heading text-[44px]">
-            Reviews
-          </h2>
-          {product.rating.count > 0 ? (
-            <p className="flex items-baseline gap-3">
-              <span className="font-display text-6xl">{product.rating.average.toFixed(1)}</span>
-              <span className="text-sm text-fg-muted">out of 5 · {product.rating.count} reviews</span>
-            </p>
-          ) : (
-            <p className="text-fg-muted">No reviews yet. Bought this pair? Tell others how it fits.</p>
-          )}
-          <Link href="/account/orders" className="btn-outline self-start">
-            Write a review
-          </Link>
-        </div>
-        <div className="grid gap-4">
-          {product.reviews.map((r) => (
-            <article key={r.id} className="flex flex-col gap-2.5 card p-7">
-              <p role="img" aria-label={`${r.rating} out of 5 stars`} className="flex gap-0.5 text-saffron">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <Star key={i} filled={i < r.rating} className={`size-4 ${i < r.rating ? "" : "text-line"}`} />
-                ))}
+      {settings.reviewsEnabled ? (
+        <section id="reviews" aria-labelledby="rev-title" className="mt-28 grid gap-10 lg:grid-cols-[1fr_2fr]">
+          <div className="flex flex-col gap-4">
+            <h2 id="rev-title" className="heading text-[44px]">
+              Reviews
+            </h2>
+            {product.rating.count > 0 ? (
+              <p className="flex items-baseline gap-3">
+                <span className="font-display text-6xl">{product.rating.average.toFixed(1)}</span>
+                <span className="text-sm text-fg-muted">out of 5 · {product.rating.count} {product.rating.count === 1 ? "review" : "reviews"}</span>
               </p>
-              {r.title ? <h3 className="font-bold">{r.title}</h3> : null}
-              {r.body ? <p className="text-sm text-fg-muted">{r.body}</p> : null}
-              <p className="text-[13px]">
-                <strong>{r.user}</strong>
-                {r.isVerifiedPurchase ? <span className="font-semibold text-success"> · Verified purchase</span> : null}
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
+            ) : (
+              <p className="text-fg-muted">No reviews yet. Bought this pair? Tell others how it fits.</p>
+            )}
+            <Link href={`/reviews/new?product=${encodeURIComponent(product.slug)}`} className="btn-outline self-start">
+              Write a review
+            </Link>
+          </div>
+          <div className="grid gap-4">
+            {product.reviews.map((r) => (
+              <article key={r.id} className="flex flex-col gap-2.5 card p-7">
+                <p role="img" aria-label={`${r.rating} out of 5 stars`} className="flex gap-0.5 text-saffron">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Star key={i} filled={i < r.rating} className={`size-4 ${i < r.rating ? "" : "text-line"}`} />
+                  ))}
+                </p>
+                {r.title ? <h3 className="font-bold">{r.title}</h3> : null}
+                {r.body ? <p className="text-sm text-fg-muted">{r.body}</p> : null}
+                <p className="text-[13px]">
+                  <strong>{r.user}</strong>
+                  {r.isVerifiedPurchase ? (
+                    <span className="font-semibold text-success"> · Verified purchase</span>
+                  ) : null}
+                  {r.fit ? <span className="text-fg-muted"> · {FIT_LABELS[r.fit]}</span> : null}
+                </p>
+                {r.adminReply ? (
+                  <div className="mt-1 rounded-xl bg-muted p-4 text-sm">
+                    <p className="text-xs font-bold">Reply from {settings.storeName}</p>
+                    <p className="mt-1 whitespace-pre-line text-fg-muted">{r.adminReply}</p>
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {related.length ? (
         <section aria-labelledby="rel-title" className="mt-28">
