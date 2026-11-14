@@ -22,7 +22,8 @@ export function AuthForm({ mode = "login" }) {
   const [pending, setPending] = useState(false);
 
   const fallback = mode === "admin" ? "/admin" : "/account";
-  const next = safeRedirectPath(searchParams.get("next"), fallback);
+  const requested = searchParams.get("next");
+  const next = safeRedirectPath(requested, fallback);
 
   async function onSubmit(event) {
     event.preventDefault();
@@ -32,6 +33,7 @@ export function AuthForm({ mode = "login" }) {
     const email = String(form.get("email") || "").trim();
     const password = String(form.get("password") || "");
 
+    let signedInStaff = false;
     try {
       if (mode === "register") {
         const { error } = await authClient.signUp.email({
@@ -52,12 +54,15 @@ export function AuthForm({ mode = "login" }) {
             error.status === 429 ? "Too many attempts. Please wait a minute." : "Incorrect email or password.",
           );
         }
-        if (mode === "admin" && !isStaff(data?.user?.role)) {
+        signedInStaff = isStaff(data?.user?.role);
+        if (mode === "admin" && !signedInStaff) {
           await authClient.signOut();
           throw new Error("This account does not have admin access.");
         }
       }
-      router.replace(next);
+      // Staff signing in from the normal sign-in page land in the admin panel,
+      // unless they were sent there from a specific page.
+      router.replace(mode === "login" && !requested && signedInStaff ? "/admin" : next);
       router.refresh();
     } catch (err) {
       setError(err.message);
