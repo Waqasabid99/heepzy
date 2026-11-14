@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ExternalLink } from "@/components/ui/icons";
 import { getCurrentUser } from "@/lib/session";
 import { isStaff, ROLE_LABELS } from "@/lib/roles";
+import { pendingMessageCount } from "@/lib/admin/messages";
 
 export const metadata = {
   title: { default: "Admin", template: "%s · Heepzy Admin" },
@@ -77,7 +78,8 @@ export default function AdminPanelLayout({ children }) {
 /** Nav for the signed-in staff member's role. */
 async function StaffNav({ rail = false }) {
   const user = await getCurrentUser();
-  return <AdminNav role={user?.role ?? null} rail={rail} />;
+  const waiting = isStaff(user?.role) ? await pendingMessageCount() : 0;
+  return <AdminNav role={user?.role ?? null} rail={rail} badges={{ "/admin/messages": waiting }} />;
 }
 
 async function SignedInAs() {

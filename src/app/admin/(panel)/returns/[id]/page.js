@@ -6,6 +6,8 @@ import { AdminPage } from "@/components/admin/ui";
 import { ReturnStatusBadge } from "@/components/admin/return-badge";
 import { ReturnActions, ReturnNote } from "@/components/admin/return-actions";
 import { getReturn } from "@/lib/admin/returns";
+import { orderMessages } from "@/lib/admin/messages";
+import { MessageCard } from "@/components/admin/message-card";
 import { REFUND_METHOD_LABELS, RESOLUTION_LABELS, RETURN_REASON_LABELS } from "@/lib/returns";
 import { PROVINCES } from "@/lib/checkout";
 import { formatPKR } from "@/lib/money";
@@ -29,6 +31,9 @@ export default withAdmin(async function ReturnPage({ params }) {
   const { id } = await params;
   const r = await getReturn(id);
   if (!r) notFound();
+  // Waiting WhatsApp messages about this return (its steps and its refunds).
+  const about = new Set([r.id, ...r.refunds.map((x) => x.id)]);
+  const waiting = (await orderMessages(r.orderId)).filter((m) => m.status === "PENDING" && about.has(m.refId));
   const wa = r.order.phone.replace(/^0/, "92");
   const media = Array.isArray(r.imageUrls) ? r.imageUrls.filter((m) => m && typeof m.name === "string") : [];
 
@@ -217,6 +222,9 @@ export default withAdmin(async function ReturnPage({ params }) {
 
         <aside className="grid content-start gap-4 lg:sticky lg:top-6 lg:self-start">
           <ReturnActions ret={r} />
+          {waiting.map((m) => (
+            <MessageCard key={m.id} message={m} showOrder={false} />
+          ))}
           <ReturnNote returnId={r.id} initial={r.status === "REJECTED" ? "" : r.adminNote} />
         </aside>
       </div>

@@ -63,7 +63,7 @@ export default withAdmin(async function CustomerPage({ params, searchParams, adm
               Orders
             </h2>
             {c.orders.length ? (
-              <div className="-mx-5 relative overflow-x-auto sm:-mx-6">
+              <div className="relative -mx-5 overflow-x-auto sm:-mx-6">
                 <table className="w-full min-w-[620px] text-left text-sm">
                   <thead className="border-b border-line text-xs font-bold tracking-[0.06em] text-fg-muted uppercase">
                     <tr>

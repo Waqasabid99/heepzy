@@ -16,6 +16,7 @@ import {
   Ticket,
   Undo,
   Users,
+  WhatsApp,
 } from "@/components/ui/icons";
 
 export const ADMIN_NAV = [
@@ -25,6 +26,7 @@ export const ADMIN_NAV = [
   { href: "/admin/inventory", label: "Inventory", Icon: Layers },
   { href: "/admin/customers", label: "Customers", Icon: Users },
   { href: "/admin/returns", label: "Returns & refunds", Icon: Undo },
+  { href: "/admin/messages", label: "Messages", Icon: WhatsApp },
   { href: "/admin/reviews", label: "Reviews", Icon: Star },
   { href: "/admin/promotions", label: "Offers", Icon: Percent },
   { href: "/admin/coupons", label: "Vouchers", Icon: Ticket },
@@ -43,10 +45,15 @@ const railCls = "md:justify-center md:px-0 lg:justify-start lg:px-3.5";
  * pages from managers. Render inside <Suspense> (reads the pathname).
  * `rail` = the sidebar (icons only between md and lg); otherwise the mobile menu list.
  */
-export function AdminNav({ role, rail = false }) {
+export function AdminNav({ role, rail = false, badges = {} }) {
   const pathname = usePathname();
   return (
-    <NavList role={role} rail={rail} isActive={(i) => (i.exact ? pathname === i.href : pathname.startsWith(i.href))} />
+    <NavList
+      role={role}
+      rail={rail}
+      badges={badges}
+      isActive={(i) => (i.exact ? pathname === i.href : pathname.startsWith(i.href))}
+    />
   );
 }
 
@@ -55,7 +62,7 @@ export function AdminNavFallback({ rail = false }) {
   return <NavList role={null} rail={rail} isActive={() => false} />;
 }
 
-function NavList({ role, rail, isActive }) {
+function NavList({ role, rail, isActive, badges = {} }) {
   const items = ADMIN_NAV.filter((i) => isOwner(role) || !OWNER_ONLY_PATHS.includes(i.href));
   return (
     <nav aria-label="Admin">
@@ -68,8 +75,26 @@ function NavList({ role, rail, isActive }) {
               aria-current={isActive(item) ? "page" : undefined}
               className={`${linkCls} ${rail ? railCls : ""}`}
             >
-              <item.Icon className="size-[18px] shrink-0" />
+              <span className="relative shrink-0">
+                <item.Icon className="size-[18px]" />
+                {badges[item.href] ? (
+                  <span
+                    aria-hidden="true"
+                    className={`absolute -top-1.5 -right-2 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] leading-4 font-bold text-accent-fg ${rail ? "lg:hidden" : "hidden"}`}
+                  >
+                    {badges[item.href] > 99 ? "99+" : badges[item.href]}
+                  </span>
+                ) : null}
+              </span>
               <span className={rail ? "md:sr-only lg:not-sr-only" : ""}>{item.label}</span>
+              {badges[item.href] ? (
+                <span
+                  className={`ml-auto rounded-full bg-accent px-2 text-[11px] leading-5 font-bold text-accent-fg ${rail ? "hidden lg:inline" : ""}`}
+                >
+                  {badges[item.href]}
+                  <span className="sr-only"> waiting</span>
+                </span>
+              ) : null}
             </Link>
           </li>
         ))}

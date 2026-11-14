@@ -1,4 +1,6 @@
 import "server-only";
+import { isOrderLinkToken } from "@/lib/order-link";
+import { queueOrderMessage } from "@/lib/messages";
 import { timingSafeEqual } from "node:crypto";
 import { db } from "@/lib/db";
 import { audit } from "@/lib/audit";
@@ -72,7 +74,7 @@ export async function settleSafepayPayment(tracker, source) {
       where: { id: payment.id, status: { not: "COMPLETED" } },
       data: { status: "COMPLETED", providerResponse: t, failureReason: null },
     });
-    if (res.count === 0) return false;
+    if (res.count === 0) return null;
     const order = await tx.order.update({
       where: { id: payment.orderId },
       data: {
@@ -88,10 +90,11 @@ export async function settleSafepayPayment(tracker, source) {
         note: `Payment of Rs ${Number(payment.amount).toLocaleString("en-PK")} received via Safepay`,
       },
     });
-    return true;
+    return order.status;
   });
   if (settled) {
     await audit({ action: "payment.completed", entity: "Order", entityId: payment.orderId, metadata: { source } });
+    if (settled === "CONFIRMED") await queueOrderMessage(payment.orderId, "CONFIRMED");
   }
   return { status: "paid", order: payment.order };
 }
@@ -112,8 +115,8 @@ export async function getOrderForViewer(orderNumber, token) {
   });
   if (!order) return null;
 
-  let allowed = false;
-  if (token && order.accessTokenHash) {
+  let allowed = isOrderLinkToken(order.orderNumber, token);
+  if (!allowed && token && order.accessTokenHash) {
     const a = Buffer.from(hashToken(token));
     const b = Buffer.from(order.accessTokenHash);
     allowed = a.length === b.length && timingSafeEqual(a, b);

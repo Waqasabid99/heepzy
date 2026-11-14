@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { NEXT_STATUSES } from "@/lib/admin/orders";
 import { cancelOrderAndRestock, ORDER_STATUS_LABELS, settleSafepayPayment } from "@/lib/orders";
+import { queueOrderMessage, toSend } from "@/lib/messages";
 
 const id = z.string().min(10).max(40);
 
@@ -55,10 +56,13 @@ export async function updateOrderStatus(_prev, formData) {
     });
     if (!done) return { ok: false, message: "This order can no longer be cancelled." };
     await audit({ actorId: admin.id, action: "order.cancel", entity: "Order", entityId: orderId, metadata: { note } });
+    const msg = await queueOrderMessage(orderId, "CANCELLED", { note });
     updateTag(CATALOG_TAG); // stock went back on sale
     refresh();
     return {
       ok: true,
+      whatsapp: toSend(msg),
+      at: Date.now(),
       message:
         order.paymentStatus === "PAID"
           ? "Order cancelled and stock restored. It was paid, so refund the customer (in the Safepay dashboard for card payments), then use Record a refund on this page."
@@ -98,8 +102,15 @@ export async function updateOrderStatus(_prev, formData) {
   });
 
   await audit({ actorId: admin.id, action: "order.status", entity: "Order", entityId: orderId, metadata: { status } });
+  const msg = await queueOrderMessage(orderId, status);
   refresh();
-  return { ok: true, message: `Order marked as ${ORDER_STATUS_LABELS[status].toLowerCase()}.` };
+  return {
+    ok: true,
+    message: `Order marked as ${ORDER_STATUS_LABELS[status].toLowerCase()}.`,
+    // Shown straight away with a "Send on WhatsApp" button (only if not sent already).
+    whatsapp: toSend(msg),
+    at: Date.now(),
+  };
 }
 
 /** Save the private admin note on an order. */

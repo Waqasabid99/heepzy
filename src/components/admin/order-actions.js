@@ -3,6 +3,7 @@
 import { startTransition, useActionState, useState, useTransition } from "react";
 import { recheckPayment, saveAdminNote, updateOrderStatus } from "@/actions/admin/orders";
 import { AlertCircle, Check } from "@/components/ui/icons";
+import { SendMessageDialog } from "@/components/admin/send-message-dialog";
 
 const NEXT_LABEL = {
   CONFIRMED: "Confirm order",
@@ -26,7 +27,7 @@ function Result({ state }) {
 }
 
 /** Status workflow, payment check and admin note for one order. */
-export function OrderActions({ order, next }) {
+export function OrderActions({ order, next, children }) {
   const [state, action, pending] = useActionState(updateOrderStatus, null);
   const [noteState, noteAction, notePending] = useActionState(saveAdminNote, null);
   const [mode, setMode] = useState(null); // "SHIPPED" | "CANCELLED" | null
@@ -46,6 +47,7 @@ export function OrderActions({ order, next }) {
 
   return (
     <div className="grid gap-4">
+      <SendMessageDialog result={state?.ok ? state : null} />
       <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="oa-title">
         <h2 id="oa-title" className="mb-3 font-extrabold">
           Next step
@@ -115,7 +117,9 @@ export function OrderActions({ order, next }) {
               <input type="hidden" name="status" value="CANCELLED" />
               <p className="text-[13px] font-semibold text-sale">
                 Cancelling puts all items back in stock.
-                {order.paymentStatus === "PAID" ? " This order is paid: refund the customer, then record the refund on this page." : ""}
+                {order.paymentStatus === "PAID"
+                  ? " This order is paid: refund the customer, then record the refund on this page."
+                  : ""}
               </p>
               <div>
                 <label htmlFor="oa-reason" className="mb-1 block text-[13px] font-bold">
@@ -156,6 +160,8 @@ export function OrderActions({ order, next }) {
           <Result state={state} />
         </div>
       </section>
+      {/* Waiting WhatsApp messages sit right under the next step. */}
+      {children}
 
       {order.paymentMethod === "CARD" ? (
         <section className="rounded-2xl border border-line bg-surface p-5" aria-labelledby="oa-pay">

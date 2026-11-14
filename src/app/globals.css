@@ -51,6 +51,7 @@
   --hz-emerald: #0b7a55;
   --hz-emerald-fg: #ffffff;
   --hz-whatsapp: #25d366;
+  --hz-whatsapp-deep: #0b7a3e; /* white text on it passes WCAG AA */
 
   /* Always-dark panels (hero, footer, admin sidebar) */
   --hz-panel: #0b0b0b;
@@ -134,6 +135,7 @@
   --color-emerald: var(--hz-emerald);
   --color-emerald-fg: var(--hz-emerald-fg);
   --color-whatsapp: var(--hz-whatsapp);
+  --color-whatsapp-deep: var(--hz-whatsapp-deep);
   --color-panel: var(--hz-panel);
   --color-panel-2: var(--hz-panel-2);
   --color-on-panel: var(--hz-on-panel);

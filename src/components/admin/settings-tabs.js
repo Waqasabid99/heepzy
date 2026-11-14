@@ -6,6 +6,7 @@ const TABS = [
   { href: "/admin/settings/delivery", label: "Delivery" },
   { href: "/admin/settings/tax", label: "Tax" },
   { href: "/admin/settings/returns", label: "Returns" },
+  { href: "/admin/settings/messages", label: "Messages" },
 ];
 
 export function SettingsTabs({ current }) {

@@ -158,8 +158,8 @@ export function CheckoutForm({ lines, unavailable, provinces, payment, initial, 
             </Field>
             <Field
               id={`${uid}-phone`}
-              label="Mobile number"
-              hint="For delivery updates and COD confirmation"
+              label="WhatsApp number"
+              hint="We send your order updates here"
               error={errors.phone}
               errId={`${uid}-phone-err`}
             >

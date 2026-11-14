@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { getOrderForViewer, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/orders";
 import { PROVINCES } from "@/lib/checkout";
 import { formatPKR } from "@/lib/money";
@@ -31,6 +32,8 @@ export default function OrderCompletePage({ params, searchParams }) {
 }
 
 async function OrderView({ params, searchParams }) {
+  // Always per request (private order data; the database driver reads the clock).
+  await connection();
   const [{ orderNumber }, sp] = await Promise.all([params, searchParams]);
   const token = typeof sp.t === "string" ? sp.t : "";
   const order = await getOrderForViewer(orderNumber, token);

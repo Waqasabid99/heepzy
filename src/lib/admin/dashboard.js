@@ -60,6 +60,7 @@ export async function getDashboard(range) {
       db.returnRequest.count({ where: { status: "REQUESTED" } }),
       db.returnRequest.count({ where: { status: "APPROVED" } }),
       db.review.count({ where: { status: "PENDING" } }),
+      db.outboundMessage.count({ where: { status: "PENDING" } }),
     ]),
     getInventoryStats(),
     db.order.findMany({
@@ -100,7 +101,7 @@ export async function getDashboard(range) {
   }
 
   const cod = current.filter((o) => o.paymentMethod === "COD").length;
-  const [pending, toPack, shipped, newReturns, returnsToReceive, reviews] = attention;
+  const [pending, toPack, shipped, newReturns, returnsToReceive, reviews, messages] = attention;
 
   return {
     range,
@@ -111,7 +112,7 @@ export async function getDashboard(range) {
       codShare: current.length ? cod / current.length : null,
     },
     chart: [...byDay].map(([date, sales]) => ({ date, sales })),
-    attention: { pending, toPack, shipped, newReturns, returnsToReceive, reviews },
+    attention: { pending, toPack, shipped, newReturns, returnsToReceive, reviews, messages },
     stock: { low: inventory.lowCount, out: inventory.outCount },
     recent: recent.map((o) => ({ ...o, grandTotal: Number(o.grandTotal), placedAt: o.placedAt.toISOString() })),
     top: top.map((t) => ({

@@ -6,7 +6,18 @@ import { SalesChart } from "@/components/admin/sales-chart";
 import { getDashboard, parseRange, RANGE_LABELS, RANGES } from "@/lib/admin/dashboard";
 import { formatPKR } from "@/lib/money";
 import { pktDateTime } from "@/lib/pkt";
-import { AlertCircle, ArrowRight, Box, Layers, Plus, Receipt, Star, Truck, Undo } from "@/components/ui/icons";
+import {
+  AlertCircle,
+  ArrowRight,
+  Box,
+  Layers,
+  Plus,
+  Receipt,
+  Star,
+  Truck,
+  Undo,
+  WhatsApp,
+} from "@/components/ui/icons";
 
 export const metadata = { title: "Dashboard" };
 
@@ -132,6 +143,7 @@ export default withAdmin(async function DashboardPage({ admin, searchParams }) {
           </h2>
           <ul>
             <Task href="/admin/orders?status=PENDING" Icon={Receipt} count={a.pending} label="new orders to confirm" />
+            <Task href="/admin/messages" Icon={WhatsApp} count={a.messages} label="WhatsApp messages to send" />
             <Task href="/admin/orders?status=CONFIRMED" Icon={Box} count={a.toPack} label="orders to pack and ship" />
             <Task href="/admin/returns?status=REQUESTED" Icon={Undo} count={a.newReturns} label="return requests" />
             <Task

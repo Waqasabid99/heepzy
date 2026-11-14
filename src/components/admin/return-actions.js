@@ -1,5 +1,6 @@
 "use client";
 
+import { SendMessageDialog } from "@/components/admin/send-message-dialog";
 import { useId, useState, useTransition } from "react";
 import Link from "next/link";
 import {
@@ -272,6 +273,7 @@ export function ReturnActions({ ret }) {
 
       <div className="mt-3">
         <Result state={state} />
+        <SendMessageDialog result={state?.ok ? state : null} />
       </div>
     </section>
   );
@@ -380,7 +382,8 @@ export function OrderRefund({ orderId, max, defaultMethod }) {
   const [pending, start] = useTransition();
   const [state, setState] = useState(null);
   const errors = state?.ok === false ? (state.errors ?? {}) : {};
-  if (!(max > 0)) return null;
+  // Fully refunded: nothing left to record, but keep the "send the refund message" dialog alive.
+  if (!(max > 0)) return state?.ok ? <SendMessageDialog result={state} /> : null;
   return (
     <section className={box} aria-labelledby={`${uid}-h`}>
       <h2 id={`${uid}-h`} className="mb-2 font-extrabold">
@@ -437,6 +440,7 @@ export function OrderRefund({ orderId, max, defaultMethod }) {
       )}
       <div className="mt-2">
         <Result state={state} />
+        <SendMessageDialog result={state?.ok ? state : null} />
       </div>
     </section>
   );

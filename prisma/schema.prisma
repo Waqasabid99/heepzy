@@ -701,6 +701,7 @@ model Order {
   returnRequests   ReturnRequest[]
   statusHistory    OrderStatusHistory[]
   couponRedemption CouponRedemption?
+  messages         OutboundMessage[]
 
   @@index([userId, placedAt])
   @@index([email])
@@ -971,4 +972,42 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([actorId, createdAt])
   @@map("audit_logs")
+}
+
+// ═════════════════════════════════════════════════════════════
+// Customer messages (WhatsApp, sent by staff with one tap)
+// ═════════════════════════════════════════════════════════════
+
+/// A ready-written message for a customer, created when an order moves on
+/// (confirmed, shipped, delivered, cancelled) or a return/refund does. Staff open it in WhatsApp (wa.me link)
+/// and send it themselves; nothing is sent by the server.
+model OutboundMessage {
+  id          String    @id @default(cuid())
+  orderId     String
+  event       String    @db.VarChar(30) // see MESSAGE_EVENTS in src/lib/message-templates.js
+  // What the message is about when an order can have several (return id, refund id); "" for order steps.
+  refId       String    @default("") @db.VarChar(40)
+  channel     String    @default("WHATSAPP") @db.VarChar(20)
+  phone       String    @db.VarChar(20) // 03XXXXXXXXX
+  body        String    @db.Text
+  status      String    @default("PENDING") @db.VarChar(12) // PENDING | SENT | SKIPPED
+  handledById String?   @db.VarChar(64)
+  handledAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, event, refId])
+  @@index([status, createdAt])
+  @@map("outbound_messages")
+}
+
+/// Editable wording for each message (Admin → Settings → Messages). No row = built-in default.
+model MessageTemplate {
+  event     String   @id @db.VarChar(30)
+  enabled   Boolean  @default(true)
+  body      String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("message_templates")
 }

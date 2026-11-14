@@ -1,5 +1,6 @@
 "use server";
 
+import { queueOrderMessage } from "@/lib/messages";
 import { redirect } from "next/navigation";
 import { updateTag } from "next/cache";
 import { z } from "zod";
@@ -266,6 +267,7 @@ export async function createAdminOrder(input) {
     metadata: { orderNumber, payment: f.payment, customerId: customer?.id ?? null, total: q.grandTotal },
   });
   updateTag(CATALOG_TAG); // stock changed
+  if (!card && f.status === "CONFIRMED") await queueOrderMessage(order.id, "CONFIRMED");
   redirect(`/admin/orders/${order.id}?created=1`);
 }
 

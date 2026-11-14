@@ -9,6 +9,10 @@ import { ReturnStatusBadge } from "@/components/admin/return-badge";
 import { REFUND_METHOD_LABELS, RESOLUTION_LABELS, refundable } from "@/lib/returns";
 import { OrderStatusBadge, PaymentBadge } from "@/components/admin/order-badges";
 import { OrderActions } from "@/components/admin/order-actions";
+import { SendMessageDialog } from "@/components/admin/send-message-dialog";
+import { MessageCard } from "@/components/admin/message-card";
+import { MessageHistory } from "@/components/admin/message-history";
+import { orderMessages } from "@/lib/admin/messages";
 import { getAdminOrder, NEXT_STATUSES } from "@/lib/admin/orders";
 import { ORDER_STATUS_LABELS } from "@/lib/orders";
 import { PROVINCES } from "@/lib/checkout";
@@ -37,6 +41,13 @@ export default withAdmin(async function OrderPage({ params, searchParams }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const order = await getAdminOrder(id);
   if (!order) notFound();
+  const messages = await orderMessages(order.id);
+  const waiting = messages.filter((m) => m.status === "PENDING").reverse();
+  const handled = messages.filter((m) => m.status !== "PENDING");
+  const needsPayment = order.paymentMethod === "CARD" && order.paymentStatus !== "PAID" && order.status === "PENDING";
+  const canRefund = ["PAID", "PARTIALLY_REFUNDED"].includes(order.paymentStatus);
+  // Kept mounted once fully refunded so the refund's WhatsApp dialog can still show.
+  const showRefund = canRefund || order.paymentStatus === "REFUNDED";
   const waPhone = order.shipPhone.replace(/^0/, "92");
 
   return (
@@ -51,6 +62,11 @@ export default withAdmin(async function OrderPage({ params, searchParams }) {
         </>
       }
     >
+      {sp.created && messages.some((m) => m.status === "PENDING") ? (
+        <SendMessageDialog
+          result={{ message: "Order created.", whatsapp: messages.find((m) => m.status === "PENDING") }}
+        />
+      ) : null}
       {sp.created ? (
         <Notice>
           Order created and stock reserved.
@@ -259,26 +275,33 @@ export default withAdmin(async function OrderPage({ params, searchParams }) {
               ))}
             </ol>
           </section>
+
+          {handled.length ? (
+            <section aria-labelledby="msgs-title" className="rounded-2xl border border-line bg-surface p-5 text-sm">
+              <h2 id="msgs-title" className="mb-3 font-extrabold">
+                WhatsApp messages
+              </h2>
+              <MessageHistory messages={handled} />
+            </section>
+          ) : null}
+
+          {(order.status !== "CANCELLED" && !needsPayment) || showRefund ? (
+            <div className="grid gap-5 sm:grid-cols-2">
+              {order.status !== "CANCELLED" && !needsPayment ? (
+                <CustomerLink orderId={order.id} orderNumber={order.orderNumber} phone={order.phone} />
+              ) : null}
+              {showRefund ? (
+                <OrderRefund
+                  orderId={order.id}
+                  max={refundable(order)}
+                  defaultMethod={order.paymentMethod === "CARD" ? "ORIGINAL_PAYMENT" : "BANK_TRANSFER"}
+                />
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
-        <aside className="grid content-start gap-4 lg:sticky lg:top-6 lg:self-start">
-          {order.status !== "CANCELLED" ? (
-            <CustomerLink
-              orderId={order.id}
-              orderNumber={order.orderNumber}
-              phone={order.phone}
-              needsPayment={
-                order.paymentMethod === "CARD" && order.paymentStatus !== "PAID" && order.status === "PENDING"
-              }
-            />
-          ) : null}
-          {["PAID", "PARTIALLY_REFUNDED"].includes(order.paymentStatus) ? (
-            <OrderRefund
-              orderId={order.id}
-              max={refundable(order)}
-              defaultMethod={order.paymentMethod === "CARD" ? "ORIGINAL_PAYMENT" : "BANK_TRANSFER"}
-            />
-          ) : null}
+        <aside className="grid content-start gap-4">
           <OrderActions
             order={{
               id: order.id,
@@ -288,7 +311,14 @@ export default withAdmin(async function OrderPage({ params, searchParams }) {
               adminNote: order.adminNote,
             }}
             next={NEXT_STATUSES[order.status] ?? []}
-          />
+          >
+            {waiting.map((m) => (
+              <MessageCard key={m.id} message={m} showOrder={false} />
+            ))}
+          </OrderActions>
+          {needsPayment ? (
+            <CustomerLink orderId={order.id} orderNumber={order.orderNumber} phone={order.phone} needsPayment />
+          ) : null}
         </aside>
       </div>
     </AdminPage>

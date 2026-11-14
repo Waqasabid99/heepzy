@@ -8,6 +8,7 @@ import { audit } from "@/lib/audit";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { formatPKR } from "@/lib/money";
 import { recordRefund } from "@/lib/returns";
+import { queueRefundMessage, queueReturnMessage, toSend } from "@/lib/messages";
 
 const id = z.string().min(10).max(40);
 const note = z.string().trim().max(1000).default("");
@@ -33,8 +34,14 @@ export async function approveReturn(returnId, message) {
     return { ok: false, message: "This request has already been reviewed." };
   }
   await log(admin.id, "return.approve", p.data.returnId, { note: p.data.message || null });
+  const msg = await queueReturnMessage(p.data.returnId, "RETURN_APPROVED", { note: p.data.message });
   refresh();
-  return { ok: true, message: "Approved. Arrange the pickup with the customer." };
+  return {
+    ok: true,
+    message: "Approved. Arrange the pickup with the customer.",
+    whatsapp: toSend(msg),
+    at: Date.now(),
+  };
 }
 
 export async function rejectReturn(returnId, message) {
@@ -49,8 +56,9 @@ export async function rejectReturn(returnId, message) {
     return { ok: false, message: "This request can no longer be rejected." };
   }
   await log(admin.id, "return.reject", p.data.returnId, { note: p.data.message });
+  const msg = await queueReturnMessage(p.data.returnId, "RETURN_REJECTED", { note: p.data.message });
   refresh();
-  return { ok: true, message: "Request rejected." };
+  return { ok: true, message: "Request rejected.", whatsapp: toSend(msg), at: Date.now() };
 }
 
 const receiveSchema = z.object({
@@ -128,10 +136,13 @@ export async function receiveReturn(input) {
   }
   await log(admin.id, "return.receive", returnId, { restocked, conditions: items.map((i) => i.condition) });
   if (restocked) updateTag(CATALOG_TAG);
+  const msg = await queueReturnMessage(returnId, "RETURN_RECEIVED");
   refresh();
   return {
     ok: true,
     message: restocked ? `Received. ${restocked} ${restocked === 1 ? "pair" : "pairs"} back in stock.` : "Received.",
+    whatsapp: toSend(msg),
+    at: Date.now(),
   };
 }
 
@@ -171,8 +182,9 @@ export async function refundReturn(returnId, input) {
     select: { status: true, rmaNumber: true, orderId: true },
   });
   if (!ret || ret.status !== "RECEIVED") return { ok: false, message: "Mark the return as received first." };
+  let refundId;
   try {
-    await recordRefund({
+    refundId = await recordRefund({
       orderId: ret.orderId,
       amount: Number(p.data.amount),
       method: p.data.method,
@@ -193,8 +205,14 @@ export async function refundReturn(returnId, input) {
     method: p.data.method,
     reference: p.data.reference || null,
   });
+  const msg = await queueRefundMessage(refundId);
   refresh();
-  return { ok: true, message: `Refund of ${formatPKR(p.data.amount)} recorded. Return completed.` };
+  return {
+    ok: true,
+    message: `Refund of ${formatPKR(p.data.amount)} recorded. Return completed.`,
+    whatsapp: toSend(msg),
+    at: Date.now(),
+  };
 }
 
 /** Finish an exchange (or a return with no refund). */
@@ -208,8 +226,9 @@ export async function completeReturn(returnId, message) {
   }
   await markOrderReturnedIfDone(ret.orderId, admin.id);
   await log(admin.id, "return.complete", p.data.returnId, { note: p.data.message || null });
+  const msg = await queueReturnMessage(p.data.returnId, "RETURN_COMPLETED", { note: p.data.message });
   refresh();
-  return { ok: true, message: "Return completed." };
+  return { ok: true, message: "Return completed.", whatsapp: toSend(msg), at: Date.now() };
 }
 
 export async function cancelReturnByAdmin(returnId, message) {
@@ -249,8 +268,9 @@ export async function recordOrderRefund(orderId, input) {
     for (const i of p.error.issues) errors[i.path[0]] ??= i.message;
     return { ok: false, errors };
   }
+  let refundId;
   try {
-    await recordRefund({
+    refundId = await recordRefund({
       orderId,
       amount: Number(p.data.amount),
       method: p.data.method,
@@ -265,6 +285,12 @@ export async function recordOrderRefund(orderId, input) {
     throw e;
   }
   await audit({ actorId: admin.id, action: "order.refund", entity: "Order", entityId: orderId, metadata: p.data });
+  const msg = await queueRefundMessage(refundId);
   refresh();
-  return { ok: true, message: `Refund of ${formatPKR(p.data.amount)} recorded.` };
+  return {
+    ok: true,
+    message: `Refund of ${formatPKR(p.data.amount)} recorded.`,
+    whatsapp: toSend(msg),
+    at: Date.now(),
+  };
 }
