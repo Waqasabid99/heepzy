@@ -11,7 +11,7 @@ Full-stack e-commerce app built with **Next.js 16 (App Router, JavaScript)**, **
 | Auth       | Better Auth (email + password, DB sessions, admin plugin, DB-backed rate limiting)               |
 | Validation | Zod 4                                                                                            |
 | Styling    | Tailwind CSS v4 with semantic design tokens (`src/app/globals.css`), light (default) + dark      |
-| Payments   | Cash on delivery + Paysafe (card / digital wallets)                                              |
+| Payments   | Cash on delivery + Safepay hosted checkout (cards / digital wallets)                             |
 
 ## Local development
 
@@ -61,7 +61,7 @@ src/
                          #   reviews, promotions, coupons, content, settings/*, audit-log
     api/auth/[...all]    # Better Auth handler
     api/health           # uptime / DB check
-    api/webhooks/paysafe # signed webhook receiver
+    api/webhooks/safepay # signed webhook receiver
   components/            # ui/, layout/, theme/, auth/, admin/
   lib/
     env.js               # zod-validated env (fails fast on boot)
@@ -71,7 +71,7 @@ src/
     rate-limit.js        # MySQL-backed fixed-window limiter + presets
     cart-token.js        # HMAC-signed guest cart cookie
     settings.js          # cached store settings (cacheTag "store-settings")
-    payments/paysafe.js  # Paysafe Payments API client + webhook signature check
+    payments/safepay.js  # Safepay client: checkout session, status check, webhook signature
     audit.js, money.js, serialize.js, request.js, safe-redirect.js
   generated/prisma/      # generated client (git-ignored)
 ```
@@ -82,7 +82,7 @@ src/
 - **Inventory**: every stock change is recorded in `InventoryMovement` (sale, restock, return, adjustment…).
 - **Cart**: one `Cart` per user, or per guest (`guestToken` in a signed httpOnly cookie). Merge the guest cart into the user's cart on login.
 - **Pricing**: `TaxRate` (GST, optional per province, inclusive/exclusive via settings), `DeliveryZone` (cities/provinces) + `DeliveryRate` (price, COD fee, free-above), global free delivery threshold, `Promotion` (automatic offers), `Coupon` (voucher codes with limits) + `CouponRedemption`.
-- **Orders**: `Order` keeps an address and price **snapshot**; `OrderItem` snapshots name, SKU, size and price. `OrderStatusHistory` is the timeline, and `Payment` records COD or Paysafe transactions keyed by a unique `merchantRef` (idempotency). `WebhookEvent` deduplicates provider callbacks.
+- **Orders**: `Order` keeps an address and price **snapshot**; `OrderItem` snapshots name, SKU, size and price. `OrderStatusHistory` is the timeline, and `Payment` records COD or Safepay attempts keyed by a unique `merchantRef` (idempotency). `WebhookEvent` deduplicates provider callbacks.
 - **Returns & refunds**: `ReturnRequest` (RMA) → `ReturnItem` → `Refund`. They can be switched on or off with `StoreSettings.returnsEnabled` / `refundsEnabled`.
 - **Admin**: `role = "admin"` on `User` (Better Auth admin plugin: ban, impersonate, sessions). `AuditLog` records every admin mutation.
 
@@ -100,7 +100,7 @@ src/
 - **Input**: validate every server action and route handler with Zod. Use Prisma for parameterised queries, and only tagged-template `$queryRaw` for raw SQL.
 - **CSRF**: Server Actions check the Origin header, Better Auth checks `trustedOrigins`, and cookies are `SameSite=Lax`.
 - **Headers** (`next.config.mjs`): CSP, HSTS, `X-Frame-Options: DENY`, nosniff, Referrer-Policy, and Permissions-Policy. Admin, account, cart and checkout pages also send `Cache-Control: private, no-store`. The CSP is static (no nonce), which keeps static rendering and prefetching.
-- **Payments**: card data never touches the server. Paysafe Checkout returns a single-use token, which keeps PCI scope at SAQ-A. Webhooks are HMAC-verified against the raw body with a constant-time compare and deduplicated by event ID. Only sanitised provider responses are stored.
+- **Payments**: card data never touches the server: shoppers pay on Safepay's hosted page (PCI scope SAQ-A). An order is only marked paid after our server asks Safepay's API for the tracker's state and checks the amount and order number. Webhooks are HMAC-SHA512 verified with a constant-time compare and deduplicated by event ID.
 - **Open redirects**: the `?next=` parameter goes through `safeRedirectPath()`.
 - **Secrets**: kept in env only and validated at boot (`src/lib/env.js`). `.env*` is git-ignored except `.env.example`.
 - **Behind a proxy/CDN**: set `TRUSTED_PROXIES` (comma-separated IPs) so client IPs resolve correctly for rate limiting.
@@ -150,20 +150,32 @@ To re-skin from design references, change the token values. Components shouldn't
    - The Hostinger `DATABASE_URL`, without `allowPublicKeyRetrieval`
    - `DATABASE_POOL_SIZE=5`
    - New random values for `BETTER_AUTH_SECRET`, `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` and `CART_COOKIE_SECRET`
-   - The Paysafe keys
+   - The Safepay keys (`SAFEPAY_ENVIRONMENT=production` and live keys)
 4. **First deploy only**: seed the admin. Run `npm run db:seed` with `SEED_ADMIN_*` set, either over SSH or locally pointed at the production `DATABASE_URL`. Then remove `SEED_ADMIN_PASSWORD` from the environment.
 5. **Domain and SSL**: enable SSL in hPanel. HSTS and `upgrade-insecure-requests` are already sent in production.
 6. Each push to `main` redeploys. Keep `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` the same across deploys.
 
 > Shared hosting has low MySQL connection limits. Keep `DATABASE_POOL_SIZE` small (3–5).
 
-## Payments: Paysafe
+## Payments: Safepay
 
-`src/lib/payments/paysafe.js` already has: create payment from a Paysafe Checkout token, get payment, refund, webhook signature verification, and response sanitising. Before going live:
+Flow (`src/actions/checkout.js`, `src/lib/payments/safepay.js`, `src/lib/orders.js`):
 
-- Confirm with Paysafe that your merchant account supports **PKR** and the wallets you want.
-- Configure the webhook URL `https://your-domain/api/webhooks/paysafe` and the HMAC key.
-- Use `PAYSAFE_ENV=TEST` with test credentials until certified.
+1. **Place order** re-prices the bag from the database, reserves stock atomically and creates the order.
+2. For card payments it creates a Safepay session (tracker) and redirects to Safepay's hosted checkout.
+3. Safepay redirects back to `/checkout/safepay/return` and sends a webhook to `/api/webhooks/safepay`.
+   Both call `settleSafepayPayment`, which asks Safepay's reporter API for the real state, checks the amount
+   and order number, then marks the order paid (idempotent; whichever arrives first wins).
+4. Cancelled payments land on the order page with a "Pay now" retry.
+
+Setup:
+
+- `.env`: `SAFEPAY_ENVIRONMENT` (`sandbox`/`production`), `NEXT_PUBLIC_SAFEPAY_PUBLIC_KEY`, `SAFEPAY_SECRET_KEY`,
+  `SAFEPAY_WEBHOOK_SHARED_SECRET_KEY`.
+- Safepay dashboard → Developers → Endpoints: add `https://your-domain/api/webhooks/safepay`
+  (`/api/v1/webhooks/inspect` is an alias used during testing).
+- Store settings: `cardPaymentsEnabled` must be on. Sandbox test card: Safepay's "Dummy card information" page.
+- Refunds are issued from the Safepay dashboard for now; cancelling a paid order reminds the admin to do so.
 
 ## Status
 

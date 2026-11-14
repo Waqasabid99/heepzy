@@ -19,6 +19,7 @@
     "db:reset": "prisma migrate reset"
   },
   "dependencies": {
+    "@headlessui/react": "2.2.10",
     "@prisma/adapter-mariadb": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@tailwindcss/turbopack": "4.3.3",

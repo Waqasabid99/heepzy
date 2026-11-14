@@ -39,7 +39,7 @@ export function proxy(request) {
   const { pathname } = request.nextUrl;
 
   // Webhooks come from payment providers' IPs and are verified by signature.
-  if (!pathname.startsWith("/api/webhooks/")) {
+  if (!pathname.startsWith("/api/webhooks/") && !pathname.startsWith("/api/v1/webhooks/")) {
     const isWrite = request.method !== "GET" && request.method !== "HEAD";
     const kind = isWrite ? "write" : "read";
     const rl = hit(`${kind}:${clientIp(request)}`, LIMITS[kind]);

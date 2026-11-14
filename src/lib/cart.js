@@ -10,6 +10,7 @@ const itemInclude = {
   variant: {
     select: {
       id: true,
+      sku: true,
       size: true,
       color: true,
       stock: true,
@@ -17,6 +18,9 @@ const itemInclude = {
       isActive: true,
       product: {
         select: {
+          id: true,
+          brandId: true,
+          categories: { select: { id: true } },
           slug: true,
           name: true,
           basePrice: true,
@@ -61,6 +65,11 @@ export async function getCart() {
     return {
       id: i.id,
       variantId: v.id,
+      productId: v.product.id,
+      brandId: v.product.brandId,
+      categoryIds: v.product.categories.map((c) => c.id),
+      sku: v.sku,
+      stock: v.stock,
       slug: v.product.slug,
       name: v.product.name,
       size: v.size,
