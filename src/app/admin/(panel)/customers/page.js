@@ -10,9 +10,11 @@ import { Plus, Search } from "@/components/ui/icons";
 export const metadata = { title: "Customers" };
 
 const TABS = [
-  [null, "All customers", "all"],
+  [null, "All", "all"],
+  ["registered", "Registered", "registered"],
   ["buyers", "Have ordered", "buyers"],
   ["none", "No orders yet", "none"],
+  ["guests", "Guest checkouts", "guests"],
   ["banned", "Blocked", "banned"],
   ["staff", "Staff", "staff"],
 ];
@@ -20,6 +22,14 @@ const TABS = [
 export default withAdmin(async function CustomersPage({ searchParams }) {
   const filters = parseCustomerListParams(await searchParams);
   const { customers, total, page, pageCount, counts } = await listCustomers(filters);
+  const guests = filters.filter === "guests";
+  // A guest row opens their account if they registered later, otherwise their orders.
+  const linkFor = (c) =>
+    c.guest
+      ? c.accountId
+        ? `/admin/customers/${c.accountId}`
+        : `/admin/orders?q=${encodeURIComponent(c.phone)}`
+      : `/admin/customers/${c.id}`;
 
   const hrefFor = (p, patch = {}) => {
     const m = { ...filters, ...patch };
@@ -34,7 +44,7 @@ export default withAdmin(async function CustomersPage({ searchParams }) {
   return (
     <AdminPage
       title="Customers"
-      description="Registered accounts with their orders and spend. Guest checkouts appear under Orders."
+      description="Everyone who has an account or has ordered. Guest checkouts are grouped by phone number."
       actions={
         <Link href="/admin/customers/new" className="btn-primary min-h-11">
           <Plus className="size-4" /> New customer
@@ -82,7 +92,8 @@ export default withAdmin(async function CustomersPage({ searchParams }) {
       </form>
 
       <p className="mb-3 text-sm text-fg-muted" role="status">
-        {total} {total === 1 ? "account" : "accounts"}
+        {total} {guests ? (total === 1 ? "guest" : "guests") : total === 1 ? "customer" : "customers"}
+        {guests ? " who checked out without an account" : null}
       </p>
 
       {customers.length ? (
@@ -97,7 +108,7 @@ export default withAdmin(async function CustomersPage({ searchParams }) {
                   Phone
                 </th>
                 <th scope="col" className="px-4 py-3">
-                  Joined
+                  {guests ? "Last order" : "Joined"}
                 </th>
                 <th scope="col" className="px-4 py-3 text-right">
                   Orders
@@ -111,9 +122,14 @@ export default withAdmin(async function CustomersPage({ searchParams }) {
               {customers.map((c) => (
                 <tr key={c.id} className="border-b border-line last:border-0 hover:bg-muted/60">
                   <td className="px-4 py-3">
-                    <Link href={`/admin/customers/${c.id}`} className="font-bold hover:underline">
+                    <Link href={linkFor(c)} className="font-bold hover:underline">
                       {c.name || "No name"}
                     </Link>
+                    {c.guest ? (
+                      <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-fg-muted">
+                        {c.accountId ? "Has account now" : "Guest"}
+                      </span>
+                    ) : null}
                     {c.banned ? (
                       <span className="ml-2 rounded-full bg-danger-bg px-2 py-0.5 text-[11px] font-bold text-sale">
                         Blocked
@@ -127,10 +143,18 @@ export default withAdmin(async function CustomersPage({ searchParams }) {
                     <span className="block text-xs text-fg-muted">{c.email}</span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">{c.phone || <span className="text-fg-muted">—</span>}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">{pktDate.format(new Date(c.createdAt))}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {c.createdAt ? pktDate.format(new Date(c.createdAt)) : "—"}
+                    {c.guest ? (
+                      <span className="block text-xs text-fg-muted">
+                        {[guests ? null : "last order", c.city].filter(Boolean).join(" · ")}
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     {c.orders}
-                    {c.lastOrderAt ? (
+                    {c.cancelled ? <span className="block text-xs text-fg-muted">{c.cancelled} cancelled</span> : null}
+                    {c.lastOrderAt && !c.guest ? (
                       <span className="block text-xs text-fg-muted">
                         last {pktDate.format(new Date(c.lastOrderAt))}
                       </span>

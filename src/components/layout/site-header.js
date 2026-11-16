@@ -4,6 +4,7 @@ import Form from "next/form";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Menu, Search, User } from "@/components/ui/icons";
 import { CartLink, CartLinkFallback } from "./cart-link";
+import { CartDrawer } from "@/components/store/cart-drawer";
 import { NavLink } from "./nav-link";
 import { AccountMenu } from "./account-menu";
 import { getCurrentUser } from "@/lib/session";
@@ -140,6 +141,7 @@ export function SiteHeader() {
           <Suspense fallback={<CartLinkFallback />}>
             <CartLink />
           </Suspense>
+          <CartDrawer />
         </div>
       </div>
     </header>

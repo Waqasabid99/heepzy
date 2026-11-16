@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { addToCart } from "@/actions/cart";
 import { formatPKR } from "@/lib/money";
+import { openCartDrawer } from "@/lib/cart-events";
 
 /**
  * Product buy box (Ndure-style): colour as photo swatches, a joined EU/UK
@@ -21,6 +22,11 @@ export function BuyBox({ product, price = null }) {
   const [size, setSize] = useState(null);
   const [state, action, pending] = useActionState(addToCart, null);
   const chartRef = useRef(null);
+
+  // Show the bag as soon as a pair is added.
+  useEffect(() => {
+    if (state?.ok) openCartDrawer({ variantId: state.variantId });
+  }, [state]);
 
   const ukFor = Object.fromEntries((product.sizeChart?.entries ?? []).map((e) => [e.eu, e.uk]));
   const variants = product.variants.filter((v) => v.color === colour);
@@ -158,9 +164,9 @@ export function BuyBox({ product, price = null }) {
         >
           {state?.message}{" "}
           {state?.ok ? (
-            <Link href="/cart" className="link-underline">
+            <button type="button" onClick={() => openCartDrawer()} className="link-underline">
               View bag
-            </Link>
+            </button>
           ) : null}
         </p>
       </div>

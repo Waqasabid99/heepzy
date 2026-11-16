@@ -2,7 +2,6 @@
 
 import { PasswordInput } from "@/components/ui/password-input";
 import { startTransition, useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { changePassword, deleteAddress, saveAddress, setDefaultAddress, updateProfile } from "@/actions/account";
 import { CityCombobox } from "@/components/store/city-combobox";
@@ -421,7 +420,6 @@ export function AddressBook({ addresses, provinces, max }) {
 }
 
 export function SignOutButton() {
-  const router = useRouter();
   const [pending, start] = useTransition();
   return (
     <button
@@ -430,8 +428,9 @@ export function SignOutButton() {
       onClick={() =>
         start(async () => {
           await authClient.signOut();
-          router.replace("/");
-          router.refresh();
+          // Full load on purpose: the whole page must re-render signed out.
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+          window.location.assign("/");
         })
       }
       className="btn-outline min-h-12"

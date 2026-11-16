@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { getCartCount } from "@/lib/cart";
 import { Bag } from "@/components/ui/icons";
+import { CartButton } from "./cart-button";
 
 const cls = "relative inline-grid size-11 place-items-center rounded-full text-fg transition-colors hover:bg-muted";
 
@@ -8,7 +8,7 @@ const cls = "relative inline-grid size-11 place-items-center rounded-full text-f
 export async function CartLink() {
   const count = await getCartCount();
   return (
-    <Link href="/cart" aria-label={`Bag, ${count} ${count === 1 ? "item" : "items"}`} className={cls}>
+    <CartButton label={`Bag, ${count} ${count === 1 ? "item" : "items"}`} className={cls}>
       <Bag />
       {count > 0 ? (
         <span
@@ -18,14 +18,14 @@ export async function CartLink() {
           {count}
         </span>
       ) : null}
-    </Link>
+    </CartButton>
   );
 }
 
 export function CartLinkFallback() {
   return (
-    <Link href="/cart" aria-label="Bag" className={cls}>
+    <CartButton label="Bag" className={cls}>
       <Bag />
-    </Link>
+    </CartButton>
   );
 }

@@ -2,7 +2,7 @@
 
 import { PasswordInput } from "@/components/ui/password-input";
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { safeRedirectPath } from "@/lib/safe-redirect";
@@ -16,7 +16,6 @@ const COPY = {
 
 /** mode: "login" | "register" | "admin" */
 export function AuthForm({ mode = "login" }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -62,8 +61,9 @@ export function AuthForm({ mode = "login" }) {
       }
       // Staff signing in from the normal sign-in page land in the admin panel,
       // unless they were sent there from a specific page.
-      router.replace(mode === "login" && !requested && signedInStaff ? "/admin" : next);
-      router.refresh();
+      // A full page load (not a client navigation + refresh, which can race and leave the
+      // loading screen up) so every part of the page re-renders with the new session.
+      window.location.assign(mode === "login" && !requested && signedInStaff ? "/admin" : next);
     } catch (err) {
       setError(err.message);
       setPending(false);

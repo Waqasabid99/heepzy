@@ -507,3 +507,46 @@ html:has(.modal[open]) {
   background: var(--hz-accent);
   animation: hz-loading-bar 1.3s ease-in-out infinite;
 }
+
+/* ───────────── Cart drawer (native <dialog>, slides in from the right) ───────────── */
+.drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: min(28rem, 100vw);
+  max-width: 100vw;
+  padding: 0;
+  border: 0;
+  box-shadow: -20px 0 60px rgb(0 0 0 / 0.2);
+  translate: 100% 0;
+  transition:
+    translate 0.35s var(--ease-out-soft),
+    overlay 0.35s allow-discrete,
+    display 0.35s allow-discrete;
+}
+.drawer[open] {
+  translate: 0 0;
+}
+.drawer::backdrop {
+  background: rgb(0 0 0 / 0);
+  transition:
+    background-color 0.35s,
+    overlay 0.35s allow-discrete,
+    display 0.35s allow-discrete;
+}
+.drawer[open]::backdrop {
+  background: var(--hz-overlay);
+}
+@starting-style {
+  .drawer[open] {
+    translate: 100% 0;
+  }
+  .drawer[open]::backdrop {
+    background: rgb(0 0 0 / 0);
+  }
+}
+html:has(.drawer[open]) {
+  overflow: hidden;
+}

@@ -2,7 +2,6 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Menu, MenuButton, MenuItem, MenuItems, MenuSeparator } from "@headlessui/react";
 import { authClient } from "@/lib/auth-client";
 import { Exchange, Grid, Receipt, User } from "@/components/ui/icons";
@@ -12,7 +11,6 @@ const item =
 
 /** Signed-in header control: initial in a circle, opens a menu with account links. */
 export function AccountMenu({ name, staff, roleLabel }) {
-  const router = useRouter();
   const [pending, start] = useTransition();
   const first = (name || "").trim().split(/\s+/)[0] || "Account";
   const initial = first[0]?.toUpperCase() ?? "?";
@@ -75,8 +73,9 @@ export function AccountMenu({ name, staff, roleLabel }) {
             onClick={() =>
               start(async () => {
                 await authClient.signOut();
-                router.replace("/");
-                router.refresh();
+                // Full load on purpose: the whole page must re-render signed out.
+                // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+                window.location.assign("/");
               })
             }
           >

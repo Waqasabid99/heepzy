@@ -6,7 +6,9 @@ import { STAFF_ROLES } from "@/lib/roles";
 
 /** Admin customer reads. Uncached; every function re-checks the admin role. */
 export const CUSTOMER_PAGE_SIZE = 25;
-export const CUSTOMER_FILTERS = ["buyers", "none", "banned", "staff"];
+// null = everyone (accounts and guest checkouts). "registered" = accounts only.
+export const CUSTOMER_FILTERS = ["registered", "buyers", "none", "guests", "banned", "staff"];
+const MAX_MERGED = 5000;
 
 export function parseCustomerListParams(sp = {}) {
   const one = (v) => (Array.isArray(v) ? v[0] : v);
@@ -28,21 +30,97 @@ function whereFor(filter, q) {
   };
 }
 
-export async function listCustomers({ q, filter, page }) {
-  await requireStaff();
-  const where = whereFor(filter, q);
-  const [total, rows, counts] = await Promise.all([
-    db.user.count({ where }),
-    db.user.findMany({
-      where,
-      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
-      skip: (page - 1) * CUSTOMER_PAGE_SIZE,
-      take: CUSTOMER_PAGE_SIZE,
-      select: { id: true, name: true, email: true, phone: true, role: true, banned: true, createdAt: true },
-    }),
-    Promise.all([null, ...CUSTOMER_FILTERS].map((f) => db.user.count({ where: whereFor(f, "") }))),
-  ]);
+/** Distinct guest buyers (checked out without an account), one per email. */
+function guestWhere(q) {
+  return {
+    userId: null,
+    ...(q
+      ? {
+          OR: [
+            { email: { contains: q.toLowerCase() } },
+            { phone: { contains: q.replace(/\D/g, "") || q } },
+            { shipFullName: { contains: q } },
+          ],
+        }
+      : {}),
+  };
+}
 
+// Guests are grouped by phone: it is required at checkout (the WhatsApp number), email isn't always given.
+async function countGuests(q = "") {
+  const groups = await db.order.groupBy({ by: ["phone"], where: guestWhere(q) });
+  return groups.length;
+}
+
+async function listGuests({ q, page, size = CUSTOMER_PAGE_SIZE }) {
+  const all = await db.order.groupBy({
+    by: ["phone"],
+    where: guestWhere(q),
+    _max: { placedAt: true },
+    orderBy: { _max: { placedAt: "desc" } },
+  });
+  const slice = all.slice((page - 1) * size, page * size).map((g) => g.phone);
+  const [counted, orders] = slice.length
+    ? await Promise.all([
+        db.order.groupBy({
+          by: ["phone"],
+          where: { userId: null, phone: { in: slice }, ...countedOrders },
+          _sum: { grandTotal: true },
+        }),
+        db.order.findMany({
+          where: { userId: null, phone: { in: slice } },
+          orderBy: { placedAt: "desc" },
+          select: { email: true, phone: true, shipFullName: true, shipCity: true, placedAt: true, status: true },
+        }),
+      ])
+    : [[], []];
+  const spentBy = new Map(counted.map((s) => [s.phone, Number(s._sum.grandTotal ?? 0)]));
+  const byPhone = new Map();
+  for (const o of orders) {
+    const g = byPhone.get(o.phone) ?? { latest: o, email: "", total: 0, cancelled: 0 };
+    if (!g.email && o.email) g.email = o.email;
+    g.total += 1;
+    if (o.status === "CANCELLED") g.cancelled += 1;
+    byPhone.set(o.phone, g);
+  }
+  const emails = [...byPhone.values()].map((g) => g.email).filter(Boolean);
+  const accounts = await db.user.findMany({
+    where: { OR: [{ phone: { in: slice } }, ...(emails.length ? [{ email: { in: emails } }] : [])] },
+    select: { id: true, email: true, phone: true },
+  });
+  const accountFor = (phone, email) => accounts.find((a) => a.phone === phone || (email && a.email === email))?.id ?? null;
+
+  return {
+    total: all.length,
+    customers: slice.map((phone) => {
+      const g = byPhone.get(phone);
+      return {
+        id: `guest:${phone}`,
+        guest: true,
+        accountId: accountFor(phone, g?.email),
+        name: g?.latest.shipFullName ?? "",
+        email: g?.email ?? "",
+        phone,
+        city: g?.latest.shipCity ?? "",
+        createdAt: g?.latest.placedAt.toISOString() ?? null,
+        orders: g?.total ?? 0,
+        cancelled: g?.cancelled ?? 0,
+        spent: spentBy.get(phone) ?? 0,
+        lastOrderAt: g?.latest.placedAt.toISOString() ?? null,
+      };
+    }),
+  };
+}
+
+/** Registered accounts with their order stats. */
+async function userRows(where, { skip = 0, take = CUSTOMER_PAGE_SIZE } = {}) {
+  const rows = await db.user.findMany({
+    where,
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    skip,
+    take,
+    select: { id: true, name: true, email: true, phone: true, role: true, banned: true, createdAt: true },
+  });
   const stats = rows.length
     ? await db.order.groupBy({
         by: ["userId"],
@@ -53,23 +131,68 @@ export async function listCustomers({ q, filter, page }) {
       })
     : [];
   const byUser = new Map(stats.map((s) => [s.userId, s]));
+  return rows.map((u) => {
+    const s = byUser.get(u.id);
+    return {
+      ...u,
+      createdAt: u.createdAt.toISOString(),
+      orders: s?._count._all ?? 0,
+      spent: Number(s?._sum.grandTotal ?? 0),
+      lastOrderAt: s?._max.placedAt?.toISOString() ?? null,
+    };
+  });
+}
 
-  return {
-    total,
-    page,
-    pageCount: Math.max(1, Math.ceil(total / CUSTOMER_PAGE_SIZE)),
-    counts: Object.fromEntries([null, ...CUSTOMER_FILTERS].map((f, i) => [f ?? "all", counts[i]])),
-    customers: rows.map((u) => {
-      const s = byUser.get(u.id);
-      return {
-        ...u,
-        createdAt: u.createdAt.toISOString(),
-        orders: s?._count._all ?? 0,
-        spent: Number(s?._sum.grandTotal ?? 0),
-        lastOrderAt: s?._max.placedAt?.toISOString() ?? null,
-      };
-    }),
-  };
+/** Guests who never made an account (those who did are listed as their account). */
+async function guestOnlyRows(q) {
+  const { customers } = await listGuests({ q, page: 1, size: MAX_MERGED });
+  return customers.filter((c) => !c.accountId);
+}
+
+export async function listCustomers({ q, filter, page }) {
+  await requireStaff();
+  const pageOf = (total) => Math.max(1, Math.ceil(total / CUSTOMER_PAGE_SIZE));
+
+  const counts = await (async () => {
+    const userFilters = ["registered", "buyers", "none", "banned", "staff"];
+    const [userCounts, guests, guestOnly] = await Promise.all([
+      Promise.all(userFilters.map((f) => db.user.count({ where: whereFor(f, "") }))),
+      countGuests(),
+      guestOnlyRows(""),
+    ]);
+    const c = Object.fromEntries(userFilters.map((f, i) => [f, userCounts[i]]));
+    return { ...c, guests, all: c.registered + guestOnly.length };
+  })();
+
+  if (filter === "guests") {
+    const { total, customers } = await listGuests({ q, page });
+    return { total, page, pageCount: pageOf(total), counts, customers };
+  }
+
+  if (!filter) {
+    // Everyone, most recently active first (last order, or sign-up date if they haven't ordered).
+    const [users, guests] = await Promise.all([
+      userRows(whereFor("registered", q), { take: MAX_MERGED }),
+      guestOnlyRows(q),
+    ]);
+    const active = (c) => c.lastOrderAt ?? c.createdAt ?? "";
+    const merged = [...users, ...guests].sort((x, y) => active(y).localeCompare(active(x)));
+    const start = (page - 1) * CUSTOMER_PAGE_SIZE;
+    return {
+      total: merged.length,
+      page,
+      pageCount: pageOf(merged.length),
+      counts,
+      customers: merged.slice(start, start + CUSTOMER_PAGE_SIZE),
+    };
+  }
+
+  const where = whereFor(filter, q);
+  const [total, customers] = await Promise.all([
+    db.user.count({ where }),
+    userRows(where, { skip: (page - 1) * CUSTOMER_PAGE_SIZE }),
+  ]);
+  return { total, page, pageCount: pageOf(total), counts, customers };
 }
 
 export async function getCustomer(id) {
