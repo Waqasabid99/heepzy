@@ -59,6 +59,11 @@ const nextConfig = {
     // Vercel Blob (STORAGE_DRIVER=blob) serves uploads from *.public.blob.vercel-storage.com.
     remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
   },
+  // Social post images read fonts and catalogue photos from disk at runtime. Serverless hosts
+  // (Vercel) only ship files the build traced, so include them for those routes.
+  outputFileTracingIncludes: {
+    "/admin/**/social-image": ["./assets/fonts/**/*", "./public/images/**/*"],
+  },
   turbopack: {
     rules: {
       "*.css": {
