@@ -126,6 +126,12 @@ model StoreSettings {
   supportEmail           String?  @db.VarChar(191)
   supportPhone           String?  @db.VarChar(20)
   whatsappNumber         String?  @db.VarChar(20)
+  // Shown in the footer
+  tagline                String?  @db.VarChar(160)
+  storeAddress           String?  @db.VarChar(255)
+  facebookUrl            String?  @db.VarChar(255)
+  instagramUrl           String?  @db.VarChar(255)
+  tiktokUrl              String?  @db.VarChar(255)
   currency               String   @default("PKR") @db.VarChar(3)
   // Top announcement bar (empty text = hidden)
   announcementText       String?  @db.VarChar(200)
@@ -134,6 +140,8 @@ model StoreSettings {
   codEnabled             Boolean  @default(true)
   codMaxOrderAmount      Decimal? @db.Decimal(12, 2)
   cardPaymentsEnabled    Boolean  @default(false)
+  // Checkout ends by sending the order to the store's WhatsApp (no payment step)
+  whatsappCheckout       Boolean  @default(true)
   // Checkout
   guestCheckoutEnabled   Boolean  @default(true)
   // Returns & refunds
@@ -645,6 +653,7 @@ enum PaymentMethod {
   CARD
   WALLET
   MANUAL // paid outside the site (bank transfer, JazzCash/Easypaisa, cash), recorded by an admin
+  WHATSAPP // sent to the store on WhatsApp; payment is agreed in the chat
 }
 
 model Order {

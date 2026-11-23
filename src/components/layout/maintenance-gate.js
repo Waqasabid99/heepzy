@@ -48,7 +48,7 @@ function MaintenancePage({ s }) {
       <meta name="robots" content="noindex" />
       <div className="max-w-lg">
         <p className="font-display text-[34px] font-semibold tracking-[0.03em] uppercase">
-          {s.storeName || "Heepzy"}
+          {s.storeName || "Mr. Shoes"}
           <span className="text-brand">.</span>
         </p>
         <h1 className="mt-8 display text-[clamp(40px,7vw,72px)]">We&apos;ll be back soon</h1>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { placeOrder, quoteCheckout } from "@/actions/checkout";
 import { formatPKR } from "@/lib/money";
-import { AlertCircle, Banknote, Check, CreditCard, ShieldCheck, Truck } from "@/components/ui/icons";
+import { AlertCircle, Banknote, Check, CreditCard, ShieldCheck, Truck, WhatsApp } from "@/components/ui/icons";
 import { CityCombobox } from "@/components/store/city-combobox";
 import { canonicalCity, isListedCity } from "@/lib/pk-cities";
 import { formatPhone } from "@/lib/phone";
@@ -40,7 +40,7 @@ export function CheckoutForm({ lines, unavailable, provinces, payment, initial, 
   const [province, setProvince] = useState(initial.province);
   const [email, setEmail] = useState(initial.email);
   const [phone, setPhone] = useState(formatPhone(initial.phone));
-  const [method, setMethod] = useState(payment.cod ? "COD" : "CARD");
+  const [method, setMethod] = useState(payment.whatsapp ? "WHATSAPP" : payment.cod ? "COD" : "CARD");
   const [rateId, setRateId] = useState("");
   const [coupon, setCoupon] = useState(""); // applied code
   const [couponInput, setCouponInput] = useState("");
@@ -63,7 +63,8 @@ export function CheckoutForm({ lines, unavailable, provinces, payment, initial, 
           setCouponMsg({ ok: false, text: res.quote.couponMessage ?? "That voucher can't be used." });
         }
       }
-      if (!res.quote.codAllowed && input.paymentMethod === "COD" && payment.card) setMethod("CARD");
+      if (!payment.whatsapp && !res.quote.codAllowed && input.paymentMethod === "COD" && payment.card)
+        setMethod("CARD");
     });
   }
 
@@ -327,61 +328,78 @@ export function CheckoutForm({ lines, unavailable, provinces, payment, initial, 
         </section>
 
         <section aria-labelledby={`${uid}-paymentMethod`} className={card} tabIndex={-1}>
-          <h2 id={`${uid}-paymentMethod`} className="mb-4 text-lg font-extrabold">
-            Payment
-          </h2>
-          {errors.paymentMethod ? <ErrorText id={`${uid}-paymentMethod-err`} text={errors.paymentMethod} /> : null}
-          <fieldset>
-            <legend className="sr-only">Payment method</legend>
-            <div className="grid gap-2">
-              {payment.cod ? (
-                <label className={`${choice} ${q && !q.codAllowed ? "opacity-50" : ""}`}>
-                  <input
-                    type="radio"
-                    name={`${uid}-pay`}
-                    checked={method === "COD"}
-                    disabled={Boolean(q && !q.codAllowed)}
-                    onChange={() => {
-                      setMethod("COD");
-                      refresh({ paymentMethod: "COD" });
-                    }}
-                    className="size-5 accent-fg"
-                  />
-                  <Banknote className="size-5 shrink-0 text-fg-muted" />
-                  <span className="flex-1">
-                    <span className="block font-bold">Cash on delivery</span>
-                    <span className="block text-[13px] text-fg-muted">
-                      {q && !q.codAllowed
-                        ? `Not available for orders over ${formatPKR(q.codLimit)}`
-                        : "Pay the rider in cash when your order arrives"}
-                    </span>
-                  </span>
-                </label>
-              ) : null}
-              {payment.card ? (
-                <label className={choice}>
-                  <input
-                    type="radio"
-                    name={`${uid}-pay`}
-                    checked={method === "CARD"}
-                    onChange={() => {
-                      setMethod("CARD");
-                      refresh({ paymentMethod: "CARD" });
-                    }}
-                    className="size-5 accent-fg"
-                  />
-                  <CreditCard className="size-5 shrink-0 text-fg-muted" />
-                  <span className="flex-1">
-                    <span className="block font-bold">Debit / credit card or wallet</span>
-                    <span className="block text-[13px] text-fg-muted">
-                      Secure payment with Safepay. You&apos;ll be taken to Safepay to pay.
-                      {payment.sandbox ? " (Test mode)" : ""}
-                    </span>
-                  </span>
-                </label>
-              ) : null}
-            </div>
-          </fieldset>
+          {payment.whatsapp ? (
+            <>
+              <h2 id={`${uid}-paymentMethod`} className="mb-3 text-lg font-extrabold">
+                Confirm on WhatsApp
+              </h2>
+              <p className="flex items-start gap-3 rounded-xl bg-muted p-4 text-sm">
+                <WhatsApp className="mt-0.5 size-5 shrink-0 text-whatsapp-deep" />
+                <span>
+                  When you tap <strong>Send order on WhatsApp</strong>, WhatsApp opens with your order typed in. Just
+                  press send. We&apos;ll reply to confirm and agree how you&apos;d like to pay.
+                </span>
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 id={`${uid}-paymentMethod`} className="mb-4 text-lg font-extrabold">
+                Payment
+              </h2>
+              {errors.paymentMethod ? <ErrorText id={`${uid}-paymentMethod-err`} text={errors.paymentMethod} /> : null}
+              <fieldset>
+                <legend className="sr-only">Payment method</legend>
+                <div className="grid gap-2">
+                  {payment.cod ? (
+                    <label className={`${choice} ${q && !q.codAllowed ? "opacity-50" : ""}`}>
+                      <input
+                        type="radio"
+                        name={`${uid}-pay`}
+                        checked={method === "COD"}
+                        disabled={Boolean(q && !q.codAllowed)}
+                        onChange={() => {
+                          setMethod("COD");
+                          refresh({ paymentMethod: "COD" });
+                        }}
+                        className="size-5 accent-fg"
+                      />
+                      <Banknote className="size-5 shrink-0 text-fg-muted" />
+                      <span className="flex-1">
+                        <span className="block font-bold">Cash on delivery</span>
+                        <span className="block text-[13px] text-fg-muted">
+                          {q && !q.codAllowed
+                            ? `Not available for orders over ${formatPKR(q.codLimit)}`
+                            : "Pay the rider in cash when your order arrives"}
+                        </span>
+                      </span>
+                    </label>
+                  ) : null}
+                  {payment.card ? (
+                    <label className={choice}>
+                      <input
+                        type="radio"
+                        name={`${uid}-pay`}
+                        checked={method === "CARD"}
+                        onChange={() => {
+                          setMethod("CARD");
+                          refresh({ paymentMethod: "CARD" });
+                        }}
+                        className="size-5 accent-fg"
+                      />
+                      <CreditCard className="size-5 shrink-0 text-fg-muted" />
+                      <span className="flex-1">
+                        <span className="block font-bold">Debit / credit card or wallet</span>
+                        <span className="block text-[13px] text-fg-muted">
+                          Secure payment with Safepay. You&apos;ll be taken to Safepay to pay.
+                          {payment.sandbox ? " (Test mode)" : ""}
+                        </span>
+                      </span>
+                    </label>
+                  ) : null}
+                </div>
+              </fieldset>
+            </>
+          )}
           <div className="mt-4">
             <label htmlFor={`${uid}-note`} className={label}>
               Note for the rider or store (optional)
@@ -506,19 +524,38 @@ export function CheckoutForm({ lines, unavailable, provinces, payment, initial, 
           <button
             type="submit"
             disabled={placing || quoting}
-            className="btn mt-5 min-h-14 w-full bg-accent text-base text-accent-fg hover:bg-accent-hover"
+            className={`btn mt-5 min-h-14 w-full text-base ${
+              payment.whatsapp
+                ? "bg-whatsapp-deep text-white hover:opacity-90"
+                : "bg-accent text-accent-fg hover:bg-accent-hover"
+            }`}
           >
-            {placing
-              ? method === "CARD"
-                ? "Taking you to Safepay…"
-                : "Placing order…"
-              : method === "CARD"
-                ? `Pay ${formatPKR(summary.grandTotal)}`
-                : "Place order"}
+            {payment.whatsapp ? (
+              placing ? (
+                "Opening WhatsApp…"
+              ) : (
+                <>
+                  <WhatsApp className="size-5" /> Send order on WhatsApp
+                </>
+              )
+            ) : placing ? (
+              method === "CARD" ? (
+                "Taking you to Safepay…"
+              ) : (
+                "Placing order…"
+              )
+            ) : method === "CARD" ? (
+              `Pay ${formatPKR(summary.grandTotal)}`
+            ) : (
+              "Place order"
+            )}
           </button>
           <ul className="mt-4 grid gap-1.5 text-[13px] text-fg-muted">
             <li className="flex items-center gap-2">
-              <ShieldCheck className="size-4" /> Secure checkout. We never see your card details.
+              <ShieldCheck className="size-4" />
+              {payment.whatsapp
+                ? "No payment now. You confirm the order with us on WhatsApp."
+                : "Secure checkout. We never see your card details."}
             </li>
             {returnDays ? (
               <li className="flex items-center gap-2">

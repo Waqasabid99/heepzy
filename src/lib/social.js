@@ -77,7 +77,7 @@ export function buildCaption({ product, settings, style, platform, url }) {
   lines.push("");
   lines.push(platform === "instagram" ? "Order now: tap the link in our bio or send us a DM." : `Order now: ${url}`);
 
-  const tags = new Set(["Heepzy", "HeepzyShoes"]);
+  const tags = new Set(["MrShoes", "MrShoesLodhran"]);
   for (const slug of categorySlugs) for (const t of CATEGORY_TAGS[slug] ?? []) tags.add(t);
   if (GENDER_TAGS[gender]) tags.add(GENDER_TAGS[gender]);
   for (const t of STYLE_TAGS[style] ?? []) tags.add(t);
@@ -137,7 +137,7 @@ function perkSentence(settings) {
 }
 
 function promoTags(style, categorySlugs = [], extra = []) {
-  const tags = new Set(["Heepzy", "HeepzyShoes", ...extra]);
+  const tags = new Set(["MrShoes", "MrShoesLodhran", ...extra]);
   for (const slug of categorySlugs) for (const t of CATEGORY_TAGS[slug] ?? []) tags.add(t);
   for (const t of style === "festive" ? STYLE_TAGS.festive : STYLE_TAGS.sale) tags.add(t);
   for (const t of ["ShoesPakistan", "OnlineShoppingPakistan"]) tags.add(t);

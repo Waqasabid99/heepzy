@@ -302,3 +302,37 @@ export const Home = (p) => (
     <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
   </Svg>
 );
+
+export const MapPin = (p) => (
+  <Svg {...p}>
+    <path d="M12 21s-7-6.1-7-11.5a7 7 0 0 1 14 0C19 14.9 12 21 12 21z" />
+    <circle cx="12" cy="9.5" r="2.5" />
+  </Svg>
+);
+
+export const Phone = (p) => (
+  <Svg {...p}>
+    <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />
+  </Svg>
+);
+
+export const Instagram = (p) => (
+  <Svg {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="5" />
+    <circle cx="12" cy="12" r="4" />
+    <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
+  </Svg>
+);
+
+/** Brand marks (filled). */
+export const Facebook = ({ className = "size-5", ...p }) => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="currentColor" className={className} {...p}>
+    <path d="M13.5 21v-7.5H16l.4-3H13.5V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4A21 21 0 0 0 14.3 4.3c-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21z" />
+  </svg>
+);
+
+export const TikTok = ({ className = "size-5", ...p }) => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="currentColor" className={className} {...p}>
+    <path d="M16.6 3c.3 2.2 1.6 3.7 3.9 3.9v3a7 7 0 0 1-3.9-1.2v6.4c0 3.5-2.6 5.9-5.8 5.9a5.6 5.6 0 0 1-5.8-5.7c0-3.4 2.9-6 6.6-5.5v3.1c-1.7-.4-3.4.6-3.4 2.4 0 1.4 1.1 2.6 2.6 2.6 1.6 0 2.7-1.2 2.7-3V3z" />
+  </svg>
+);

@@ -8,18 +8,23 @@ import { ExternalLink } from "@/components/ui/icons";
 import { getCurrentUser } from "@/lib/session";
 import { isStaff, ROLE_LABELS } from "@/lib/roles";
 import { pendingMessageCount } from "@/lib/admin/messages";
+import { BRAND_HOME_LABEL, Wordmark } from "@/components/brand/wordmark";
+import { BRAND } from "@/lib/brand";
 
 export const metadata = {
-  title: { default: "Admin", template: "%s · Heepzy Admin" },
+  title: { default: "Admin", template: `%s · ${BRAND.name} Admin` },
   robots: { index: false, follow: false },
 };
 
 const Logo = ({ compact = false }) => (
   <span className="flex items-center gap-2">
-    <span className="font-display text-[26px] leading-none font-semibold tracking-[0.03em] uppercase">
-      {compact ? "H" : "Heepzy"}
-      <span className="text-accent">.</span>
-    </span>
+    {compact ? (
+      <span className="font-display text-[26px] leading-none font-semibold uppercase">
+        M<span className="text-accent">.</span>
+      </span>
+    ) : (
+      <Wordmark className="text-[24px]" />
+    )}
     {compact ? null : (
       <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-fg">Admin</span>
     )}

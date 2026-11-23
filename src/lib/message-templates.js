@@ -118,7 +118,7 @@ export function renderTemplate(body, values) {
 /** Example values for the settings preview. */
 export const SAMPLE_VALUES = {
   name: "Ayesha",
-  store: "Heepzy",
+  store: "Mr. Shoes",
   order: "HZ-26-4K9D2Q",
   items: "• Zari Khussa, Red, size 38 × 1\n• Court Classic, White, size 39 × 1",
   total: "Rs 11,480",
@@ -126,9 +126,9 @@ export const SAMPLE_VALUES = {
   cod: "Rs 11,480",
   courier: "TCS",
   tracking: "7713 2290 451",
-  link: "https://heepzy.pk/checkout/complete/HZ-26-4K9D2Q?t=…",
+  link: "https://mrshoes.pk/checkout/complete/HZ-26-4K9D2Q?t=…",
   return_days: "7",
-  store_link: "https://heepzy.pk",
+  store_link: "https://mrshoes.pk",
   rma: "RMA-26-K3D9QX",
   resolution: "exchange",
   note: "",

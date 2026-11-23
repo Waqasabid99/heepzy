@@ -1,7 +1,7 @@
 /**
  * Seed baseline data. Idempotent — safe to run repeatedly.
  *   npm run db:seed
- * Creates: admin user (from SEED_ADMIN_* env), store settings, GST rate,
+ * Creates: admin user (from SEED_ADMIN_* env), store settings (Mr. Shoes),
  * delivery zones/rates, categories, brand, a size chart and one sample product.
  */
 import "dotenv/config";
@@ -72,27 +72,25 @@ async function seedStore() {
     update: {},
     create: {
       id: 1,
-      storeName: "Heepzy",
-      announcementText: "Blessed Friday Sale — up to 30% off selected styles. Free delivery over Rs 5,000",
-      announcementLink: "/offers",
+      storeName: "Mr. Shoes",
+      tagline: "Trust has one name: Mr. Shoes",
+      storeAddress: "Jhandeer Market, Main Bazaar, Lodhran",
+      supportPhone: "0305 5832649",
+      whatsappNumber: "923055832649",
+      facebookUrl: "https://www.facebook.com/share/1GQdPvFSQv/",
+      tiktokUrl: "https://www.tiktok.com/@mrshoes00",
+      // Orders are sent to the store on WhatsApp; payment is agreed in the chat.
+      whatsappCheckout: true,
+      codEnabled: false,
+      cardPaymentsEnabled: false,
+      // No tax is charged to customers (add a rate in Admin → Settings → Tax if that changes).
+      pricesIncludeTax: true,
+      announcementText: "Free delivery over Rs 5,000. Order on WhatsApp in a few taps",
       freeDeliveryEnabled: true,
       freeDeliveryThreshold: "5000.00",
       returnWindowDays: 7,
     },
   });
-
-  // Fill the announcement for stores seeded before the field existed.
-  await db.storeSettings.updateMany({
-    where: { id: 1, announcementText: null },
-    data: {
-      announcementText: "Blessed Friday Sale — up to 30% off selected styles. Free delivery over Rs 5,000",
-      announcementLink: "/offers",
-    },
-  });
-
-  if (!(await db.taxRate.count())) {
-    await db.taxRate.create({ data: { name: "GST", rate: "18.00", priority: 0 } });
-  }
 
   if (!(await db.deliveryZone.count())) {
     await db.deliveryZone.create({
@@ -119,7 +117,7 @@ async function seedStore() {
       },
     });
   }
-  console.log("• Store settings, tax and delivery seeded");
+  console.log("• Store settings and delivery seeded");
 }
 
 const CATEGORIES = [
@@ -420,8 +418,8 @@ async function seedCatalogue() {
 
   const brand = await db.brand.upsert({
     where: { slug: "heepzy" },
-    update: {},
-    create: { name: "Heepzy", slug: "heepzy" },
+    update: { name: "Mr. Shoes" },
+    create: { name: "Mr. Shoes", slug: "heepzy" },
   });
 
   const charts = {};

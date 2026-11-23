@@ -207,8 +207,10 @@ export default withAdmin(async function OrderPage({ params, searchParams }) {
                   className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted px-3 py-2"
                 >
                   <span>
-                    <span className="font-semibold">{PROVIDER[p.provider] ?? p.provider}</span> ·{" "}
-                    {PAYMENT_STATUS[p.status] ?? p.status}
+                    <span className="font-semibold">
+                      {p.method === "WHATSAPP" ? "WhatsApp order" : (PROVIDER[p.provider] ?? p.provider)}
+                    </span>{" "}
+                    · {PAYMENT_STATUS[p.status] ?? p.status}
                     {p.providerState ? ` (${p.providerState})` : ""}
                     {p.providerPaymentId ? (
                       <span className="block font-mono text-xs text-fg-muted">{p.providerPaymentId}</span>

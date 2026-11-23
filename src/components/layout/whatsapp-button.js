@@ -9,7 +9,7 @@ export async function WhatsAppButton() {
   const { whatsappNumber } = await getStoreSettings();
   const digits = whatsappNumber?.replace(/\D/g, "");
   if (!digits || digits.length < 10) return null;
-  const text = encodeURIComponent("Hi Heepzy, I need help with my order.");
+  const text = encodeURIComponent("Hi Mr. Shoes, I need help with my order.");
 
   return (
     <a

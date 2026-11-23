@@ -18,7 +18,7 @@ export const STATUS_EVENT = {
   CANCELLED: "ORDER_CANCELLED",
 };
 
-const PAYMENT_WORDS = { COD: "cash on delivery", CARD: "paid by card", WALLET: "paid", MANUAL: "paid" };
+const PAYMENT_WORDS = { COD: "cash on delivery", CARD: "paid by card", WALLET: "paid", MANUAL: "paid", WHATSAPP: "as agreed on WhatsApp" };
 const RESOLUTION_WORDS = { EXCHANGE: "exchange", REFUND: "refund", STORE_CREDIT: "store credit" };
 const REFUND_WORDS = {
   ORIGINAL_PAYMENT: "back to your card",

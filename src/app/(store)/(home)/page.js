@@ -17,9 +17,10 @@ import sneakers from "../../../../public/images/lifestyle/high-tops.jpg";
 import desiDrip from "../../../../public/images/campaign/desi-drip.jpg";
 import shaadi from "../../../../public/images/campaign/shaadi.jpg";
 import eid from "../../../../public/images/campaign/eid.jpg";
+import { BRAND } from "@/lib/brand";
 
 export const metadata = {
-  title: { absolute: "Heepzy — Shoes, khussa & sneakers delivered across Pakistan" },
+  title: { absolute: `${BRAND.name} | Shoes, khussa & sneakers delivered across Pakistan` },
 };
 
 const BUDGET = 5000;

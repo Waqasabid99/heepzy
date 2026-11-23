@@ -15,7 +15,7 @@ import { Exchange, Video } from "@/components/ui/icons";
 
 export const metadata = {
   title: "Returns & exchange",
-  description: "How to return or exchange shoes bought from Heepzy.",
+  description: "How to return or exchange shoes bought from Mr. Shoes.",
 };
 
 const dateFmt = new Intl.DateTimeFormat("en-PK", { day: "numeric", month: "short", timeZone: "Asia/Karachi" });

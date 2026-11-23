@@ -116,7 +116,7 @@ export function AuthForm({ mode = "login" }) {
 
       {mode === "login" ? (
         <p className="text-center text-sm text-fg-muted">
-          New to Heepzy?{" "}
+          New to Mr. Shoes?{" "}
           <Link href="/register" className="font-medium text-fg underline">
             Create an account
           </Link>

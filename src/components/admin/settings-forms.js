@@ -197,6 +197,62 @@ export function StoreSettingsForm({ s }) {
 
           <div className="mt-2 grid gap-4 sm:grid-cols-2">
             <Field
+              id={`${uid}-tag`}
+              name="tagline"
+              label="Tagline"
+              hint="footer"
+              defaultValue={s.tagline ?? ""}
+              maxLength={160}
+              placeholder="Trust has one name: Mr. Shoes"
+              error={e.tagline}
+            />
+            <Field
+              id={`${uid}-addr`}
+              name="storeAddress"
+              label="Shop address"
+              hint="footer"
+              defaultValue={s.storeAddress ?? ""}
+              maxLength={255}
+              placeholder="Main Bazaar, Lodhran"
+              error={e.storeAddress}
+            />
+            <Field
+              id={`${uid}-fb`}
+              name="facebookUrl"
+              type="url"
+              label="Facebook page"
+              hint="optional"
+              defaultValue={s.facebookUrl ?? ""}
+              maxLength={255}
+              placeholder="https://www.facebook.com/…"
+              error={e.facebookUrl}
+            />
+            <Field
+              id={`${uid}-ig`}
+              name="instagramUrl"
+              type="url"
+              label="Instagram"
+              hint="optional"
+              defaultValue={s.instagramUrl ?? ""}
+              maxLength={255}
+              placeholder="https://www.instagram.com/…"
+              error={e.instagramUrl}
+            />
+            <Field
+              id={`${uid}-tt`}
+              name="tiktokUrl"
+              type="url"
+              label="TikTok"
+              hint="optional"
+              defaultValue={s.tiktokUrl ?? ""}
+              maxLength={255}
+              placeholder="https://www.tiktok.com/@…"
+              error={e.tiktokUrl}
+            />
+          </div>
+
+          <div className="mt-2 grid gap-4 sm:grid-cols-2">
+            <Field
               id={`${uid}-ann`}
               name="announcementText"
               label="Announcement bar"
@@ -266,11 +322,23 @@ export function PaymentSettingsForm({ s, safepay }) {
   return (
     <SettingsForm
       title="Payment methods"
-      description="What customers can choose at checkout."
+      description="How customers finish their order."
       action={savePaymentSettings}
     >
       {(e, uid) => (
         <>
+          <Toggle
+            name="whatsappCheckout"
+            title="Checkout on WhatsApp"
+            description={
+              s.whatsappNumber
+                ? `Customers fill in their address, then send the order to ${s.whatsappNumber} on WhatsApp. You agree payment in the chat; the options below are hidden.`
+                : "Customers send their order to your WhatsApp. Add the store's WhatsApp number under General first."
+            }
+            defaultChecked={s.whatsappCheckout}
+            error={e.whatsappCheckout}
+          />
+          <p className="text-[13px] text-fg-muted">Used when checkout on WhatsApp is off:</p>
           <Toggle
             name="codEnabled"
             title="Cash on delivery"

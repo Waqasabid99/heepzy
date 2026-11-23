@@ -3,7 +3,7 @@ import { getLiveOffers, listProducts, parseFilters } from "@/lib/catalog";
 import { ProductCard } from "@/components/store/product-card";
 import { ArrowRight, Clock } from "@/components/ui/icons";
 
-export const metadata = { title: "Offers", description: "Shoes on sale at Heepzy — limited sizes, while stocks last." };
+export const metadata = { title: "Offers", description: "Shoes on sale at Mr. Shoes: limited sizes, while stocks last." };
 
 const endsFmt = new Intl.DateTimeFormat("en-PK", {
   weekday: "short",

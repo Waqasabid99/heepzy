@@ -16,7 +16,7 @@ const PAYMENT = {
   REFUNDED: ["Refunded", "bg-muted text-fg-muted"],
 };
 
-const METHOD = { COD: "Cash on delivery", CARD: "Card (Safepay)", WALLET: "Wallet", MANUAL: "Paid offline" };
+const METHOD = { COD: "Cash on delivery", CARD: "Card (Safepay)", WALLET: "Wallet", MANUAL: "Paid offline", WHATSAPP: "WhatsApp order" };
 
 const pill = "inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap";
 

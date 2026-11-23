@@ -18,6 +18,9 @@ import {
   returnsForOrder,
 } from "@/lib/returns";
 import { CancelReturnButton } from "@/components/store/cancel-return-button";
+import { WhatsAppOrderButton } from "@/components/store/whatsapp-order-button";
+import { ownerOrderLink } from "@/lib/whatsapp-order";
+import { WhatsApp } from "@/components/ui/icons";
 
 export const metadata = { title: "Your order", robots: { index: false } };
 
@@ -74,7 +77,17 @@ async function OrderView({ params, searchParams }) {
   let text = `We'll call or WhatsApp you on ${order.phone} to confirm, then pack your order. Pay the rider in cash on delivery.`;
   // An order the shop created with a card-payment link: no Safepay attempt yet.
   const notStarted = awaiting && !order.payments[0]?.providerPaymentId;
-  if (order.paymentMethod === "MANUAL") {
+  const viaWhatsApp = order.paymentMethod === "WHATSAPP";
+  const waHref = viaWhatsApp && order.status === "PENDING" ? ownerOrderLink(order, settings) : null;
+  if (waHref) {
+    tone = "info";
+    Icon = WhatsApp;
+    title = "Last step: send your order on WhatsApp";
+    text = `WhatsApp opens with your order typed in. Press send and ${settings.storeName} will reply to confirm it and agree payment and delivery.`;
+  } else if (viaWhatsApp && ["CONFIRMED", "PROCESSING"].includes(order.status)) {
+    title = "Thank you! Your order is confirmed.";
+    text = "We're getting your order ready and will keep you updated on WhatsApp.";
+  } else if (order.paymentMethod === "MANUAL") {
     title = "Thank you! Your order is confirmed.";
     text = "Your payment has been received. We're getting your order ready and will keep you updated.";
   } else if (isCard && paid) {
@@ -136,6 +149,15 @@ async function OrderView({ params, searchParams }) {
             {title}
           </h1>
           <p className="mt-2 max-w-2xl text-fg">{text}</p>
+          {waHref ? (
+            <div className="mt-5 grid justify-items-start gap-2">
+              <WhatsAppOrderButton href={waHref} orderNumber={order.orderNumber} autoOpen={sp.sent === "wa"} />
+              <p className="text-[13px] text-fg-muted">
+                WhatsApp didn&apos;t open? Tap the button, or message us on {settings.whatsappNumber} with order{" "}
+                {order.orderNumber}.
+              </p>
+            </div>
+          ) : null}
           {canRetry ? (
             <div className="mt-5">
               <RetryPayment

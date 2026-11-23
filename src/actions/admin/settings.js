@@ -2,6 +2,7 @@
 
 import { refresh, updateTag } from "next/cache";
 import { z } from "zod";
+import { waNumber } from "@/lib/whatsapp";
 import { db } from "@/lib/db";
 import { requireStaff } from "@/lib/session";
 import { audit } from "@/lib/audit";
@@ -54,6 +55,13 @@ const upsert = (data) => db.storeSettings.upsert({ where: { id: 1 }, update: dat
 
 // ─── Store ─────────────────────────────────────────────────────
 
+const socialUrl = z
+  .string()
+  .trim()
+  .max(255)
+  .refine((v) => !v || /^https:\/\/[^\s]+$/.test(v), "Paste the full link, starting with https://")
+  .transform((v) => v || null);
+
 const storeSchema = z.object({
   storeName: z.string().trim().min(2, "Enter the store name").max(120),
   supportEmail: z.union([z.literal(""), z.email("Enter a valid email address").max(191)]).transform((v) => v || null),
@@ -76,6 +84,11 @@ const storeSchema = z.object({
       }
       return `92${local.slice(1)}`; // wa.me needs the international form
     }),
+  tagline: optionalText(160),
+  storeAddress: optionalText(255),
+  facebookUrl: socialUrl,
+  instagramUrl: socialUrl,
+  tiktokUrl: socialUrl,
   announcementText: optionalText(200),
   announcementLink: z
     .string()
@@ -97,6 +110,11 @@ export async function saveStoreSettings(_prev, fd) {
     supportEmail: text(fd, "supportEmail"),
     supportPhone: text(fd, "supportPhone"),
     whatsappNumber: text(fd, "whatsappNumber"),
+    tagline: text(fd, "tagline"),
+    storeAddress: text(fd, "storeAddress"),
+    facebookUrl: text(fd, "facebookUrl"),
+    instagramUrl: text(fd, "instagramUrl"),
+    tiktokUrl: text(fd, "tiktokUrl"),
     announcementText: text(fd, "announcementText"),
     announcementLink: text(fd, "announcementLink"),
     guestCheckoutEnabled: bool(fd, "guestCheckoutEnabled"),
@@ -115,18 +133,33 @@ export async function saveStoreSettings(_prev, fd) {
 export async function savePaymentSettings(_prev, fd) {
   const admin = await requireStaff();
   const parsed = z
-    .object({ codEnabled: z.boolean(), codMaxOrderAmount: optionalMoney, cardPaymentsEnabled: z.boolean() })
+    .object({
+      whatsappCheckout: z.boolean(),
+      codEnabled: z.boolean(),
+      codMaxOrderAmount: optionalMoney,
+      cardPaymentsEnabled: z.boolean(),
+    })
     .superRefine((p, ctx) => {
-      if (!p.codEnabled && !p.cardPaymentsEnabled) {
+      if (!p.whatsappCheckout && !p.codEnabled && !p.cardPaymentsEnabled) {
         ctx.addIssue({ code: "custom", path: ["codEnabled"], message: "Keep at least one way to pay switched on" });
       }
     })
     .safeParse({
+      whatsappCheckout: bool(fd, "whatsappCheckout"),
       codEnabled: bool(fd, "codEnabled"),
       codMaxOrderAmount: text(fd, "codMaxOrderAmount"),
       cardPaymentsEnabled: bool(fd, "cardPaymentsEnabled"),
     });
   if (!parsed.success) return issues(parsed.error);
+  if (parsed.data.whatsappCheckout) {
+    const current = await db.storeSettings.findUnique({ where: { id: 1 }, select: { whatsappNumber: true } });
+    if (!waNumber(current?.whatsappNumber)) {
+      return {
+        ok: false,
+        errors: { whatsappCheckout: "Add the store's WhatsApp number under General first" },
+      };
+    }
+  }
   if (parsed.data.cardPaymentsEnabled && !(await safepayConfigured())) {
     return { ok: false, errors: { cardPaymentsEnabled: "Add the Safepay keys first" } };
   }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BRAND_HOME_LABEL, Wordmark } from "@/components/brand/wordmark";
 
 /**
  * Full-page message for 404, access denied, errors… Stands alone (its own small
@@ -9,7 +10,10 @@ export function StatusPage({ code, title, message, reference, compact = false, c
   const body = (
     <div className="mx-auto flex max-w-xl flex-col items-center text-center">
       {code ? (
-        <p aria-hidden="true" className="font-display text-[clamp(5rem,22vw,9rem)] leading-none font-semibold text-accent">
+        <p
+          aria-hidden="true"
+          className="font-display text-[clamp(5rem,22vw,9rem)] leading-none font-semibold text-accent"
+        >
           {code}
         </p>
       ) : null}
@@ -35,15 +39,8 @@ export function StatusPage({ code, title, message, reference, compact = false, c
     <>
       <header className="border-b border-line">
         <div className="container-page flex h-16 items-center">
-          <Link
-            href="/"
-            aria-label="Heepzy home"
-            className="font-display text-[26px] leading-none font-semibold tracking-[0.03em] uppercase"
-          >
-            Heepzy
-            <span aria-hidden="true" className="text-accent">
-              .
-            </span>
+          <Link href="/" aria-label={BRAND_HOME_LABEL}>
+            <Wordmark className="text-[26px]" />
           </Link>
         </div>
       </header>

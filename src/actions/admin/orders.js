@@ -72,6 +72,8 @@ export async function updateOrderStatus(_prev, formData) {
 
   const now = new Date();
   await db.$transaction(async (tx) => {
+    const settlesOnDelivery =
+      status === "DELIVERED" && ["COD", "WHATSAPP"].includes(order.paymentMethod) && order.paymentStatus !== "PAID";
     const res = await tx.order.updateMany({
       where: { id: orderId, status: order.status },
       data: {
@@ -79,22 +81,24 @@ export async function updateOrderStatus(_prev, formData) {
         ...(status === "CONFIRMED" ? { confirmedAt: now } : {}),
         ...(status === "SHIPPED" ? { shippedAt: now, courier, trackingNumber: trackingNumber || null } : {}),
         ...(status === "DELIVERED" ? { deliveredAt: now } : {}),
-        // COD: the rider collected the cash on delivery.
-        ...(status === "DELIVERED" && order.paymentMethod === "COD" ? { paymentStatus: "PAID" } : {}),
+        // COD: the rider collected the cash. WhatsApp orders: payment was settled in the chat or at the door.
+        ...(settlesOnDelivery ? { paymentStatus: "PAID" } : {}),
       },
     });
     if (res.count === 0) throw new Error("CHANGED");
-    if (status === "DELIVERED" && order.paymentMethod === "COD") {
+    if (settlesOnDelivery) {
       await tx.payment.updateMany({
-        where: { orderId, provider: "COD", status: { in: ["INITIATED", "PENDING"] } },
+        where: { orderId, provider: { in: ["COD", "MANUAL"] }, status: { in: ["INITIATED", "PENDING"] } },
         data: { status: "COMPLETED" },
       });
     }
     const autoNote =
       status === "SHIPPED"
         ? `Shipped with ${courier}${trackingNumber ? ` (tracking ${trackingNumber})` : ""}`
-        : status === "DELIVERED" && order.paymentMethod === "COD"
-          ? "Delivered, cash collected"
+        : settlesOnDelivery
+          ? order.paymentMethod === "COD"
+            ? "Delivered, cash collected"
+            : "Delivered, payment settled"
           : null;
     await tx.orderStatusHistory.create({
       data: { orderId, status, note: [autoNote, note].filter(Boolean).join(". ") || null, actorId: admin.id },

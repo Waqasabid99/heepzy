@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { PROVINCES } from "@/lib/checkout";
 import { getSafepayStatus } from "@/lib/payments/safepay";
 import { CheckoutForm } from "@/components/store/checkout-form";
+import { waNumber } from "@/lib/whatsapp";
 
 export const metadata = { title: "Checkout", robots: { index: false } };
 
@@ -71,6 +72,7 @@ async function Checkout() {
       unavailable={cart.lines.length - lines.length}
       provinces={PROVINCES}
       payment={{
+        whatsapp: settings.whatsappCheckout && Boolean(waNumber(settings.whatsappNumber)),
         cod: settings.codEnabled,
         card: settings.cardPaymentsEnabled && safepay.configured,
         sandbox: safepay.environment !== "production",

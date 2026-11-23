@@ -22,7 +22,7 @@ const pktKey = (d) => new Date(d.getTime() + PKT).toISOString().slice(0, 10);
 const counted = {
   status: { not: "CANCELLED" },
   OR: [
-    { paymentMethod: { in: ["COD", "MANUAL"] } },
+    { paymentMethod: { in: ["COD", "MANUAL", "WHATSAPP"] } },
     { paymentStatus: { in: ["PAID", "PARTIALLY_REFUNDED", "REFUNDED"] } },
   ],
 };

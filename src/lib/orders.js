@@ -31,6 +31,7 @@ export const PAYMENT_METHOD_LABELS = {
   CARD: "Card / wallet (Safepay)",
   WALLET: "Wallet",
   MANUAL: "Paid offline",
+  WHATSAPP: "Agreed on WhatsApp",
 };
 
 /**

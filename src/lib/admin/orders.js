@@ -24,7 +24,7 @@ export function parseOrderListParams(sp = {}) {
   const payment = ["UNPAID", "PENDING", "PAID", "FAILED", "REFUNDED"].includes(one(sp.payment))
     ? one(sp.payment)
     : null;
-  const method = ["COD", "CARD", "MANUAL"].includes(one(sp.method)) ? one(sp.method) : null;
+  const method = ["COD", "CARD", "MANUAL", "WHATSAPP"].includes(one(sp.method)) ? one(sp.method) : null;
   return {
     q: (one(sp.q) ?? "").toString().trim().slice(0, 100),
     status,

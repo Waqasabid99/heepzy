@@ -15,8 +15,8 @@ export function CustomerLink({ orderId, orderNumber, phone, needsPayment }) {
 
   const message = link
     ? needsPayment
-      ? `Assalam o Alaikum! Your Heepzy order ${orderNumber} is ready. Please pay securely here: ${link}`
-      : `Assalam o Alaikum! Track your Heepzy order ${orderNumber} here: ${link}`
+      ? `Assalam o Alaikum! Your Mr. Shoes order ${orderNumber} is ready. Please pay securely here: ${link}`
+      : `Assalam o Alaikum! Track your Mr. Shoes order ${orderNumber} here: ${link}`
     : "";
   const wa = phone
     ? `https://wa.me/${phone.replace(/\D/g, "").replace(/^0/, "92")}?text=${encodeURIComponent(message)}`

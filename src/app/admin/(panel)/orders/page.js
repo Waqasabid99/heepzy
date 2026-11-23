@@ -82,6 +82,7 @@ export default withAdmin(async function OrdersPage({ searchParams }) {
           <option value="COD">Cash on delivery</option>
           <option value="CARD">Card (Safepay)</option>
           <option value="MANUAL">Paid offline</option>
+          <option value="WHATSAPP">WhatsApp order</option>
         </select>
         <label htmlFor="o-pay" className="sr-only">
           Payment status

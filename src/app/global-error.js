@@ -9,7 +9,7 @@ export default function GlobalError({ error, retry, reset }) {
   return (
     <html lang="en-PK">
       <head>
-        <title>Something went wrong · Heepzy</title>
+        <title>Something went wrong · Mr. Shoes</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body

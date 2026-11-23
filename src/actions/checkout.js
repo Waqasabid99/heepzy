@@ -18,6 +18,7 @@ import { isStaff } from "@/lib/roles";
 import { newAccessToken, nextOrderNumber, PROVINCES, quote } from "@/lib/checkout";
 import { createCheckout, safepayConfigured } from "@/lib/payments/safepay";
 import { createOrder, getOrderForViewer } from "@/lib/orders";
+import { waNumber } from "@/lib/whatsapp";
 
 const appUrl = () => env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
 
@@ -40,7 +41,7 @@ export async function quoteCheckout(input) {
       city: z.string().trim().max(80).default(""),
       province: z.union([z.literal(""), z.enum(Object.keys(PROVINCES))]).default(""),
       rateId: z.string().max(40).default(""),
-      paymentMethod: z.enum(["COD", "CARD"]).default("COD"),
+      paymentMethod: z.enum(["COD", "CARD", "WHATSAPP"]).default("COD"),
       couponCode: z.string().trim().max(40).default(""),
       email: z.string().trim().max(191).default(""),
       applyCoupon: z.boolean().default(false),
@@ -85,7 +86,7 @@ const orderSchema = z.object({
   province: z.enum(Object.keys(PROVINCES), { error: "Choose your province" }),
   postalCode: z.union([z.literal(""), z.string().regex(/^\d{5}$/, "Postal code is 5 digits")]).default(""),
   rateId: z.string().min(1, "Choose a delivery option").max(40),
-  paymentMethod: z.enum(["COD", "CARD"], { error: "Choose how you'd like to pay" }),
+  paymentMethod: z.enum(["COD", "CARD", "WHATSAPP"], { error: "Choose how you'd like to pay" }),
   couponCode: z.string().trim().max(40).default(""),
   note: z.string().trim().max(500).default(""),
 });
@@ -130,6 +131,14 @@ export async function placeOrder(_prev, formData) {
   }
   if (!user && !settings.guestCheckoutEnabled) return fail({}, "Please sign in to place an order.");
   if (!lines.length) return fail({}, "Your bag is empty.");
+  // WhatsApp checkout replaces the payment step: the order goes to the store's WhatsApp.
+  // (Without a store number it falls back to the normal payment options.)
+  const viaWhatsApp = settings.whatsappCheckout && Boolean(waNumber(settings.whatsappNumber));
+  if (viaWhatsApp) {
+    f.paymentMethod = "WHATSAPP";
+  } else if (f.paymentMethod === "WHATSAPP") {
+    return fail({ paymentMethod: "Choose how you'd like to pay" });
+  }
   const problems = cart.lines.filter((l) => !l.available || l.quantity > l.stock);
   if (problems.length) {
     return fail(
@@ -153,10 +162,10 @@ export async function placeOrder(_prev, formData) {
     return fail({ rateId: "That delivery option isn't available for this address" });
   if (f.couponCode && !q.coupon) return fail({ couponCode: q.couponMessage ?? "That voucher can't be used" });
   const pay = await paymentOptions(settings);
-  if (f.paymentMethod === "COD" && (!pay.cod || !q.codAllowed)) {
+  if (!viaWhatsApp && f.paymentMethod === "COD" && (!pay.cod || !q.codAllowed)) {
     return fail({ paymentMethod: "Cash on delivery isn't available for this order. Please pay by card." });
   }
-  if (f.paymentMethod === "CARD" && !pay.card)
+  if (!viaWhatsApp && f.paymentMethod === "CARD" && !pay.card)
     return fail({ paymentMethod: "Card payments are not available right now." });
 
   const orderNumber = await nextOrderNumber();
@@ -200,7 +209,7 @@ export async function placeOrder(_prev, formData) {
       paymentMethod: f.paymentMethod,
       paymentStatus: f.paymentMethod === "CARD" ? "PENDING" : "UNPAID",
       payment: {
-        provider: f.paymentMethod === "CARD" ? "SAFEPAY" : "COD",
+        provider: f.paymentMethod === "CARD" ? "SAFEPAY" : viaWhatsApp ? "MANUAL" : "COD",
         status: f.paymentMethod === "CARD" ? "PENDING" : "INITIATED",
         providerPaymentId: checkout?.tracker ?? null,
       },
@@ -231,7 +240,8 @@ export async function placeOrder(_prev, formData) {
   }
 
   updateTag(CATALOG_TAG);
-  redirect(checkout ? checkout.url : viewUrl);
+  // WhatsApp orders: the order page opens the store's chat with the order typed in.
+  redirect(checkout ? checkout.url : viaWhatsApp ? `${viewUrl}&sent=wa` : viewUrl);
 }
 
 /** Start a new Safepay attempt for an unpaid card order (after a cancelled/failed attempt). */

@@ -12,7 +12,7 @@ const trustedProxies = (process.env.TRUSTED_PROXIES || "")
   .filter(Boolean);
 
 export const auth = betterAuth({
-  appName: "Heepzy",
+  appName: "Mr. Shoes",
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [env.NEXT_PUBLIC_APP_URL],

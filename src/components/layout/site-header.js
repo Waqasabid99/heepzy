@@ -9,6 +9,7 @@ import { NavLink } from "./nav-link";
 import { AccountMenu } from "./account-menu";
 import { getCurrentUser } from "@/lib/session";
 import { isStaff } from "@/lib/roles";
+import { BRAND_HOME_LABEL, Wordmark } from "@/components/brand/wordmark";
 
 export const NAV = [
   { href: "/products?sort=newest", label: "New in" },
@@ -92,15 +93,8 @@ export function SiteHeader() {
           </div>
         </details>
 
-        <Link
-          href="/"
-          aria-label="Heepzy home"
-          className="font-display text-[28px] leading-none font-semibold tracking-[0.03em] uppercase lg:text-[34px]"
-        >
-          Heepzy
-          <span aria-hidden="true" className="text-accent">
-            .
-          </span>
+        <Link href="/" aria-label={BRAND_HOME_LABEL} className="shrink-0">
+          <Wordmark className="text-[28px] lg:text-[34px]" />
         </Link>
 
         <nav aria-label="Primary" className="hidden flex-1 lg:block">
